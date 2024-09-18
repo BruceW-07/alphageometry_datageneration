@@ -19,7 +19,7 @@ from generate_random_proofs import convert_var_names_from_alpha_geo_names
 import csv
 
 
-def main(run_id, interactive):
+def main(run_id, interactive, num_sol_depth):
     dataset_length = 20_000
     # filename = f'../../datasets/nl_fl_dataset_{run_id}.csv'
     filename = (f'/is/cluster/scratch/pghosh/dataset/alpha_geo/geometry_long_correct_goal/'
@@ -42,7 +42,8 @@ def main(run_id, interactive):
         writer = csv.DictWriter(csvfile, fieldnames=field_names, quoting=csv.QUOTE_MINIMAL, quotechar='"')
         writer.writeheader()
         serial_num = run_id * dataset_length
-        cc_gen = CompoundClauseGen(definitions, max_comma_sep_clause=3, max_single_clause=7, max_sets=2, seed=run_id)
+        cc_gen = CompoundClauseGen(definitions, max_comma_sep_clause=3, max_single_clause=7, max_sets=2, seed=run_id,
+                                   shuffle_var_names=False)
         verbalizer = IndependentStatementVerbalization(None)
 
         for i in range(dataset_length):
@@ -87,7 +88,7 @@ def main(run_id, interactive):
 
             if interactive: print(f'Solving ...')
 
-            ddar.solve(g, rules, p, max_level=1)
+            ddar.solve(g, rules, p, max_level=num_sol_depth)
 
             # Randomly select a cache node to be the goal. #TODO: Is this right can we do better? Consider coverage!
             possible_goals = list(g.cache.keys())
@@ -136,11 +137,15 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Create problem fl - nl dataset')
     parser.add_argument('--run_id', required=True, type=int, help='An integer positional argument')
-    parser.add_argument('--interactive', required=True, type=str_to_bool, help='A boolean value (true/false)')
+    parser.add_argument('--interactive', required=True, type=str_to_bool,
+                        help='A boolean value (true/false)')
+    parser.add_argument('--num_sol_depth', required=True, type=int,
+                        help='Howmany steps will the DDAR search through.')
     args = parser.parse_args()
 
     n_processes = 16
-    offset = 2000 * n_processes
+    offset = 0 * n_processes
 
     with multiprocessing.Pool(n_processes) as pool:
-        pool.starmap(main, [(offset + args.run_id * n_processes + i, args.interactive) for i in range(n_processes)])
+        pool.starmap(main, [(offset + args.run_id * n_processes + i, args.interactive, args.num_sol_depth)
+                            for i in range(n_processes)])

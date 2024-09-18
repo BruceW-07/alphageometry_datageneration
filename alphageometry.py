@@ -80,7 +80,7 @@ DEFINITIONS = None  # contains definitions of construction actions
 RULES = None  # contains rules of deductions
 
 
-def natural_language_statement(logical_statement: pr.Dependency) -> str:
+def natural_language_statement(logical_statement: pr.Dependency) -> (str, str):
   """Convert logical_statement to natural language.
 
   Args:
@@ -91,12 +91,13 @@ def natural_language_statement(logical_statement: pr.Dependency) -> str:
   """
   names = [a.name.upper() for a in logical_statement.args]
   names = [(n[0] + '_' + n[1:]) if len(n) > 1 else n for n in names]
-  return pt.pretty_nl(logical_statement.name, names)
+  fl_statement = f'{logical_statement.name} {" ".join(names)}'
+  return fl_statement, pt.pretty_nl(logical_statement.name, names)
 
 
 def proof_step_string(
     proof_step: pr.Dependency, refs: dict[tuple[str, ...], int], last_step: bool
-) -> str:
+) -> (str, str):
   """Translate proof to natural language.
 
   Args:
@@ -109,26 +110,30 @@ def proof_step_string(
   """
   premises, [conclusion] = proof_step
 
-  premises_nl = ' & '.join(
-      [
-          natural_language_statement(p) + ' [{:02}]'.format(refs[p.hashed()])
-          for p in premises
-      ]
-  )
+  premises_nl = []
+  premises_fl = []
+  for p in premises:
+    fl_statement, nl_statement = natural_language_statement(p)
+    premises_nl.append(nl_statement + ' [{:02}]'.format(refs[p.hashed()]))
+    premises_fl.append(fl_statement + ' [{:02}]'.format(refs[p.hashed()]))
+
+  premises_nl = ' & '.join(premises_nl)
+  premises_fl = ' & '.join(premises_fl)
 
   if not premises:
     premises_nl = 'similarly'
 
   refs[conclusion.hashed()] = len(refs)
 
-  conclusion_nl = natural_language_statement(conclusion)
+  conclusion_fl, conclusion_nl = natural_language_statement(conclusion)
   if not last_step:
     conclusion_nl += ' [{:02}]'.format(refs[conclusion.hashed()])
+    conclusion_fl += ' [{:02}]'.format(refs[conclusion.hashed()])
 
-  return f'{premises_nl} \u21d2 {conclusion_nl}'
+  return f'{premises_fl} \u21d2 {conclusion_fl}', f'{premises_nl} \u21d2 {conclusion_nl}'
 
 
-def write_solution(g: gh.Graph, p: pr.Problem, out_file: str, goal=None) -> None:
+def write_solution(g: gh.Graph, p: pr.Problem, out_file: str, goal=None) -> (str, str):
   """Output the solution to out_file.
 
   Args:
@@ -143,28 +148,37 @@ def write_solution(g: gh.Graph, p: pr.Problem, out_file: str, goal=None) -> None
       g, goal, merge_trivials=False
   )
 
-  solution = '\n=========================='
-  solution += '\n * From theorem premises:\n'
+  nl_solution = '\n=========================='
+  nl_solution += '\n * From theorem premises:\n'
+  fl_solution = ''
   premises_nl = []
+  premises_fl = []
   for premises, [points] in setup:
-    solution += ' '.join([p.name.upper() for p in points]) + ' '
+    nl_solution += ' '.join([p.name.upper() for p in points]) + ' '
     if not premises:
       continue
-    premises_nl += [
-        natural_language_statement(p) + ' [{:02}]'.format(refs[p.hashed()])
-        for p in premises
-    ]
-  solution += ': Points\n' + '\n'.join(premises_nl)
 
-  solution += '\n\n * Auxiliary Constructions:\n'
+    for p in premises:
+      fl_prem_statement, nl_prem_statement = natural_language_statement(p)
+      premises_nl.append(nl_prem_statement + ' [{:02}]'.format(refs[p.hashed()]))
+      premises_fl.append(fl_prem_statement + ' [{:02}]'.format(refs[p.hashed()]))
+
+
+  nl_solution += ': Points\n' + '\n'.join(premises_nl)
+  fl_solution += ': Points\n' + '\n'.join(premises_fl)
+
+  nl_solution += '\n\n * Auxiliary Constructions:\n'
   aux_premises_nl = []
+  aux_premises_fl = []
   for premises, [points] in aux:
-    solution += ' '.join([p.name.upper() for p in points]) + ' '
-    aux_premises_nl += [
-        natural_language_statement(p) + ' [{:02}]'.format(refs[p.hashed()])
-        for p in premises
-    ]
-  solution += ': Points\n' + '\n'.join(aux_premises_nl)
+    nl_solution += ' '.join([p.name.upper() for p in points]) + ' '
+    for p in premises:
+      fl_prem_statement, nl_prem_statement = natural_language_statement(p)
+      aux_premises_nl.append(nl_prem_statement + ' [{:02}]'.format(refs[p.hashed()]))
+      aux_premises_fl.append(fl_prem_statement + ' [{:02}]'.format(refs[p.hashed()]))
+
+  nl_solution += ': Points\n' + '\n'.join(aux_premises_nl)
+  fl_solution += ': Points\n' + '\n'.join(aux_premises_fl)
 
   # some special case where the deduction rule has a well known name.
   r2name = {
@@ -182,21 +196,26 @@ def write_solution(g: gh.Graph, p: pr.Problem, out_file: str, goal=None) -> None
       'a02': '(Angle chase)',
   }
 
-  solution += '\n\n * Proof steps:\n'
+  nl_solution += '\n\n * Proof steps:\n'
+  fl_solution = '\n\n * Formal Proof steps:\n'
   for i, step in enumerate(proof_steps):
     _, [con] = step
-    nl = proof_step_string(step, refs, last_step=i == len(proof_steps) - 1)
+    fl, nl = proof_step_string(step, refs, last_step=i == len(proof_steps) - 1)
     rule_name = r2name.get(con.rule_name, '')
     nl = nl.replace('\u21d2', f'{rule_name}\u21d2 ')
-    solution += '{:03}. '.format(i + 1) + nl + '\n'
+    # fl = fl.replace('\u21d2', f'{rule_name}\u21d2 ')
+    nl_solution += '{:03}. '.format(i + 1) + nl + '\n'
+    fl_solution += '{:03}. '.format(i + 1) + fl + '\n'
 
-  solution += '==========================\n'
-  logging.info(solution)
-  print(solution)
+  nl_solution += '==========================\n'
+  logging.info(nl_solution)
+
   if out_file:
     with open(out_file, 'w') as f:
-      f.write(solution)
+      f.write(nl_solution)
     logging.info('Solution written to %s.', out_file)
+
+  return fl_solution, nl_solution
 
 #
 # def get_lm(ckpt_init: str, vocab_path: str) -> lm.LanguageModelInference:

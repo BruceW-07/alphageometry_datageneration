@@ -37,7 +37,7 @@ def get_apha_geo_solver_var(va_idx):
 
 
 class ClauseGenerator:
-    def __init__(self, defs, clause_relations, is_comma_sep, seed):
+    def __init__(self, defs, clause_relations, is_comma_sep, seed, shuffle_var_names=False):
         self.defs = defs
         self.defined_points = []
         self.is_comma_sep = is_comma_sep
@@ -47,8 +47,9 @@ class ClauseGenerator:
         self.point_counter = 0  # Start from 0
         self.max_points = 26 * 10  # 26 letters, 10 cycles (0 to 9, inclusive)
         self.var_idxs = list(range(self.max_points))
-        random.seed(seed)
-        random.shuffle(self.var_idxs)
+        if shuffle_var_names:
+            random.seed(seed)
+            random.shuffle(self.var_idxs)
         self.alpha_geo_solv_var_2_used_var_ = {}
 
     def get_varname_2_alpha_geo_var_map(self):
@@ -188,12 +189,14 @@ class ClauseGenerator:
 
 
 class CompoundClauseGen:
-    def __init__(self, definitions, max_comma_sep_clause, max_single_clause, max_sets, seed):
+    def __init__(self, definitions, max_comma_sep_clause, max_single_clause, max_sets, seed, shuffle_var_names):
         self.max_comma_sep_clause = max_comma_sep_clause
         self.max_single_clause = max_single_clause
         self.max_sets = max_sets
-        self.cg_comma_sep = ClauseGenerator(definitions, INTERSECT, is_comma_sep=True, seed=seed)
-        self.cg_single_clause = ClauseGenerator(definitions, list(definitions.keys()), is_comma_sep=False, seed=seed)
+        self.cg_comma_sep = ClauseGenerator(definitions, INTERSECT, is_comma_sep=True, seed=seed,
+                                            shuffle_var_names=shuffle_var_names)
+        self.cg_single_clause = ClauseGenerator(definitions, list(definitions.keys()), is_comma_sep=False, seed=seed,
+                                                shuffle_var_names=shuffle_var_names)
 
     def get_varname_2_alpha_geo_var_map(self):
         return self.cg_single_clause.get_varname_2_alpha_geo_var_map()
