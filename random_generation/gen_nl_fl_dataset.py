@@ -14,16 +14,17 @@ from pretty import pretty_nl
 from prettier_print.prettier_proof_statements import translate_step
 from utils.get_rand_gen_states import get_random_states
 from verb.verbalize import IndependentStatementVerbalization
+from alphageometry import write_solution
 from generate_random_proofs import convert_var_names_from_alpha_geo_names
 
 import csv
 
 
 def main(run_id, interactive, num_sol_depth):
-    dataset_length = 20_000
+    dataset_length = 20
     # filename = f'../../datasets/nl_fl_dataset_{run_id}.csv'
-    filename = (f'/is/cluster/scratch/pghosh/dataset/alpha_geo/geometry_long_correct_goal/'
-                f'nl_fl_dataset_{run_id}.csv')
+    filename = (f'/is/cluster/fast/scratch/pghosh/dataset/alpha_geo/geometry/geometry_w_proof/'
+                f'nl_fl_w_proof_dataset_{run_id}.csv')
     # filename = '../data/nl_fl_dataset_2.csv'
     random.seed(run_id)
     defs_path = '../defs.txt'
@@ -33,7 +34,7 @@ def main(run_id, interactive, num_sol_depth):
     definitions, rules = load_definitions_and_rules(defs_path, rules_path)
 
     # field_names = ['sl_n', 'num_clauses', 'nl_statement', 'fl_statement', 'goal_nl', 'goal_fl', 'rnd_states']
-    field_names = ['sl_n', 'num_clauses', 'nl_statement', 'fl_statement']
+    field_names = ['sl_n', 'num_clauses', 'nl_statement', 'fl_statement', 'nl_solution', 'fl_solution']
 
     # Write data to the CSV file
     with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
@@ -57,7 +58,7 @@ def main(run_id, interactive, num_sol_depth):
             if interactive: print(fl_statement)
 
             try:
-                p = pr.Problem.from_txt(fl_statement)
+                problem = pr.Problem.from_txt(fl_statement)
             except KeyError as e:
                 print(e)
                 continue
@@ -68,7 +69,7 @@ def main(run_id, interactive, num_sol_depth):
                 signal.alarm(10)
 
                 # Code block to execute with timeout
-                g, _ = gh.Graph.build_problem(p, definitions)
+                graph, _ = gh.Graph.build_problem(problem, definitions)
 
                 # Disable the alarm
                 signal.alarm(0)
@@ -88,20 +89,25 @@ def main(run_id, interactive, num_sol_depth):
 
             if interactive: print(f'Solving ...')
 
-            ddar.solve(g, rules, p, max_level=num_sol_depth)
+            ddar.solve(graph, rules, problem, max_level=num_sol_depth)
 
             # Randomly select a cache node to be the goal. #TODO: Is this right can we do better? Consider coverage!
-            possible_goals = list(g.cache.keys())
+            possible_goals = list(graph.cache.keys())
             if len(possible_goals) > 0:
                 goal_fl = list(random.choice(possible_goals))  # comment this line
                 # goal_fl = random.choice(possible_goals + [''])  # uncomment this line to get goal less problems
                 if goal_fl == '':
                     goal_nl = ''
                 else:
+                    # get proof
+                    goal = pr.Construction(goal_fl[0], list(goal_fl[1:]))
+                    fl_soln, nl_soln= write_solution(graph, problem, goal=goal, out_file='')
+
                     capitalized_pt_names = [point_name.capitalize() for point_name in goal_fl[1:]]
                     goal_fl[1:] = capitalized_pt_names
-                    var_map = cc_gen.get_varname_2_alpha_geo_var_map()
-                    goal_fl = convert_var_names_from_alpha_geo_names(var_map, goal_fl)
+                    # var_map = cc_gen.get_varname_2_alpha_geo_var_map()
+                    #only needed when variable names are scrambled. But then should be passed into the proof too
+                    # goal_fl = convert_var_names_from_alpha_geo_names(var_map, goal_fl)
                     pretty_goal = pretty_nl(goal_fl[0], goal_fl[1:])
                     if pretty_goal is None:
                         raise ValueError(f'Could not pretty print goal: {goal_fl}')
@@ -116,8 +122,8 @@ def main(run_id, interactive, num_sol_depth):
                     'num_clauses': num_clauses,
                     'nl_statement': nl_prob + goal_nl,
                     'fl_statement': fl_statement + goal_fl,
-                    # 'goal_nl': goal_nl,
-                    # 'goal_fl': goal_fl
+                    'nl_solution': nl_soln,
+                    'fl_solution': fl_soln
                 }
                 writer.writerow(row)
                 serial_num += 1
