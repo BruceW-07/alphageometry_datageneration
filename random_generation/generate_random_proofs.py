@@ -39,15 +39,18 @@ def main():
     random.seed(4)
     # Example entities and conditions for illustration purposes
 
-    defs_path = '../defs.txt'
+    # defs_path = '../defs.txt'
+    defs_path = '../wrong_defs.txt'
     rules_path = '../rules.txt'
 
     # Load definitions and rules
     definitions, rules = load_definitions_and_rules(defs_path, rules_path)
-    definitions, rules = load_definitions_and_rules(defs_path, rules_path)
     cc_gen = CompoundClauseGen(definitions, 2, 3, 2, 42,
                                shuffle_var_names=False)
     txt = cc_gen.generate_clauses()
+    txt = 'A B C = ieq_triangle A B C; D = angle_mirror D A C B; E F G H = incenter2 E F G H C A D'
+    # txt = 'A B C X = eq_trapezoid X A B C'
+    # txt = 'B = free B; A = free A; C = free C; D = orthocenter D A B C'
         # txt = 'A B C = risos A B C; D = eqangle2 D C A B; E = angle_mirror E A D C, angle_mirror E D A C; F = orthocenter F D B C; G H = on_pline G A E F, angle_mirror H E A B'
     # txt = 'A = free A; B = free B; C = free C; D = circle A B C'
     # Let P be an interior point of triangle ABC and AP, BP, CP meet the sides BC, CA, AB in D, E, F respectively. Show that AP/PD = AF/FB + AE/EC
@@ -75,15 +78,15 @@ def main():
         raise e
 
     # # Additionaly draw this generated problem
-    # gh.nm.draw(
-    #     graph.type2nodes[gh.Point],
-    #     graph.type2nodes[gh.Line],
-    #     graph.type2nodes[gh.Circle],
-    #     graph.type2nodes[gh.Segment])
+    gh.nm.draw(
+        graph.type2nodes[gh.Point],
+        graph.type2nodes[gh.Line],
+        graph.type2nodes[gh.Circle],
+        graph.type2nodes[gh.Segment])
 
     print(f'Solving ...')
 
-    ddar.solve(graph, rules, problem, max_level=3)
+    ddar.solve(graph, rules, problem, max_level=5)
 
     # Randomly select a cache node to be the goal. #TODO: Is this right can we do better? Consider coverage!
     # random.seed(4)

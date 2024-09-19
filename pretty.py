@@ -89,6 +89,8 @@ def pretty_angle(a: str, b: str, c: str, d: str) -> str:
 
   if a == c:
     return f'\u2220{b}{a}{d}'
+
+  # angle between the non-connected lines {a}{b} and line {C}{d}
   return f'\u2220({a}{b}-{c}{d})'
 
 def pretty_nl_from_str(s):
