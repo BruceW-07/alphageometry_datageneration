@@ -1,4 +1,26 @@
 #%%
+from datasets import DatasetDict, Dataset
+# for testing
+ds = Dataset.from_dict({
+    "formal": ["Hello how are you", "I am fine", "What are you doing?"],
+    "natural": ["What are you doing?", "I am fine", "Hello how are you"],
+    "total_token_lens": [1510, 339, 45],
+})
+rephrased_dataset = DatasetDict({"train": ds, "validation": ds, "test": ds})
+
+
+# insert the code below right after this code:
+# rephrased_dataset = prepare_data(
+#     args.dataset_dir / 'rephrased-nl_fl_dataset_all.jsonl', seed=seed, nrows=args.nrows_rephrased, 
+#     colnames={"formal": "fl_statement", "natural": "rephrase"}
+# )
+print(f"Rephrased dataset before filtering: {rephrased_dataset}")
+rephrased_dataset = rephrased_dataset.filter(lambda x: x["total_token_lens"] <= 1500)
+print(f"Rephrased dataset after filtering: {rephrased_dataset}")
+
+
+
+#%%
 import itertools
 import json
 

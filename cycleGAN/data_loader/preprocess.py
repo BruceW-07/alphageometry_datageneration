@@ -15,8 +15,8 @@ num_csvs = 0
 for filename in tqdm.tqdm(Path(directory).iterdir()):
     if filename.endswith('.csv'):
         num_csvs += 1
-        if num_csvs > 2:
-            break
+        # if num_csvs > 2:
+        #     break
         file_path = os.path.join(directory, filename)
         df = pd.read_csv(file_path)
         dataframes.append(df)

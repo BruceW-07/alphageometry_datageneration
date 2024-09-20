@@ -6,7 +6,7 @@ import numpy as np
 from datasets import load_dataset, DatasetDict, Dataset
 
 
-def _detect_dataset_load_type(filename) -> str:
+def detect_hf_dataset_load_type(filename) -> str:
     if str(filename).endswith('.csv'):
         return 'csv'
     elif str(filename).endswith('.jsonl') or str(filename).endswith('.json'):
@@ -22,7 +22,7 @@ def prepare_data(filename, test_size=0.1, seed=None, colnames=None, **kwargs) ->
         kwargs: additional arguments to pass to load_dataset
         colnames: maps formal and natural column names to the actual column names in the dataset
     """
-    load_type = _detect_dataset_load_type(filename)
+    load_type = detect_hf_dataset_load_type(filename)
     nrows = None
     if load_type == "json":
         if "nrows" in kwargs:

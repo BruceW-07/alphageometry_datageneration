@@ -336,6 +336,11 @@ def load_model(model_name, wait_token='<w>', use_pretrained=True, use_perplexity
     tokenizer.pad_token = tokenizer.eos_token
     # add a special wait token and formal begin, end and natural begin end tokens
     # tokenizer.add_tokens([wait_token] + fl_init_end_toks + nl_init_end_toks, )
+    if fl_init_end_toks[0] is None:
+        fl_init_end_toks = []
+    if nl_init_end_toks[0] is None:
+        nl_init_end_toks = []
+
     special_tokens_dict = {
         'additional_special_tokens': [wait_token] + fl_init_end_toks + nl_init_end_toks
     }
