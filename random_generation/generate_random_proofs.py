@@ -11,6 +11,7 @@ import problem as pr
 from clause_generation import CompoundClauseGen
 import signal
 import copy
+from draw_svg.get_svg import draw_svg
 
 
 def convert_var_names_from_alpha_geo_names(var_map, goal_statement_as_list):
@@ -77,14 +78,25 @@ def main():
         print("Graph couldn't bre create in reasonable time. Perhaps problem with the premises. Exiting ...")
         raise e
 
-    # # Additionaly draw this generated problem
+    # Additionaly draw this generated problem
     gh.nm.draw(
         graph.type2nodes[gh.Point],
         graph.type2nodes[gh.Line],
         graph.type2nodes[gh.Circle],
         graph.type2nodes[gh.Segment])
 
+    svg_text = draw_svg(
+        graph.type2nodes[gh.Point],
+        graph.type2nodes[gh.Line],
+        graph.type2nodes[gh.Circle],
+        graph.type2nodes[gh.Segment])
+
+    # Write SVG code to a file
+    with open('output.svg', 'w') as f:
+        f.write(svg_text)
+
     print(f'Solving ...')
+    exit(0)
 
     ddar.solve(graph, rules, problem, max_level=5)
 
