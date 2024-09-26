@@ -1,0 +1,210 @@
+I have some geometry problems that need to be formalized using a very specific format. Here are examples of all the possible constructions that may be used in the problems with the first line showing a description of the construction and the second line showing the corresponding way the construction is formalized:
+
+∠DBF and ∠FBE are bisected by F.
+angle_bisector F D B E
+---
+Point E is defined such that E is a point such that ∠ACD = ∠DCE.
+E = angle_mirror E A C D
+---
+E is defined such that E is the center of the circle that passes through A, D, and C.
+E = circle E D C A
+---
+D is defined such that D is the circumcenter of triangle BCA.
+D = circumcenter D B C A
+---
+Points A, C, D, and B are defined such that A, C, D, & B is a quadrilateral such that line AD is congruent to line BC.
+A B C D = eq_quadrangle A B C D
+---
+A, C, D, B are point such that A, C, D, B is a trapezoid such that line AD is equal to line BC.
+A B C D = eq_trapezoid A B C D
+---
+Point F is defined such that in triangle FAD, line DF = line AD = line FA.
+F = eq_triangle F A D
+---
+Point E is defined such that E is a point where ∠CAE is the same as ∠EBC.
+E = eqangle2 E A C B
+---
+Let A, C, B, & D be points such that for quadrilateral ABCD, line AC is equal to line BD.
+A B C D = eqdia_quadrangle A B C D
+---
+Point F is defined such that F is a point such that line DC = line FE.
+F = eqdistance F E D C
+---
+Let K be a point such that K is the foot of F on line AE.
+K = foot K F A E
+---
+A is a point.
+A = free A
+---
+Point E is defined such that triangle CAB has incenter E.
+E = incenter E C A B
+---
+Define points E, F, D, G such that G is the incenter of triangle CAB with touchpoints E, F, D.
+D E F G = incenter2 D E F G C A B
+---
+Define point J such that J is at the excenter of triangle AIB.
+J = excenter J A I B
+---
+Let F, I, H, and G be points such that I is at the excenter of A, B, & D with touchpoints G, F, and H.
+F G H I = excenter2 F G H I D A B
+---
+Define points G, H, F, I such that triangle ABE has centroid I.
+F G H I = centroid F G H I A B E
+---
+Let L, O, N, and M be points such that the nine-point center of triangle DHF is O. the circle intersects the sides line HF, at L, line FD, at M, and line DH, at N.
+L M N O = ninepoints L M N O D H F
+---
+K is defined such that circle centered at J with radius JD intersects circle centered at E with radius ED at K and D.
+K = intersection_cc K J E D
+---
+D is defined such that line AC intersects circle centered at B with radius BC at D, C.
+D = intersection_lc D A B C
+---
+Let E be a point such that line CA meets line BD at E.
+E = intersection_ll E C A B D
+---
+Point I is defined such that Parallel line BH through F meets line AG at I.
+I = intersection_lp I A G F B H
+---
+Line BC not at right angle to line AE. line DF at right angle to line AE intersects line BC at F.
+F = intersection_lt F B C D A E
+---
+Let K be a point such that line KB and line HD are parallel. line FK and line AG are parallel. line KB intersects line FK at the point K.
+K = intersection_pp K B H D F A G
+---
+N is defined such that line FI || line HG. line CN perpendicular to line FI. line LN and line CN are perpendicular to line HG and line FI respectively. They intersect at N.
+N = intersection_tt N C F I L H G
+---
+C, B, and A are point such that triangle ABC is an isosceles triangle with line CA = line AB.
+A B C = iso_triangle A B C
+---
+D is a points such that line DB is tangent to circle centered at C with radius CB at the point D.
+D = lc_tangent D B C
+---
+Let E be a point such that E is a point such that distance between C & E equivalent distance between E, A.
+E = midpoint E A C
+---
+Point G is defined such that G is on line FC such that C, G is equal to F & C.
+G = mirror G F C
+---
+Let G be a point such that G, B, D are three consecutive vertices of a square.
+G = nsquare G B D
+---
+I is a points such that I is such that ∠IHA is equal to ∠BCG.
+I = on_aline I H A B C G
+---
+Define point F such that F is on perpendicular bisector of line AB.
+F = on_bline F A B
+---
+E is defined such that E is on the circumference of circle centered at B with radius BD.
+E = on_circle E D B
+---
+Point E is defined such that E is on line DC.
+E = on_line E D C
+---
+E is defined such that E is on a line through B and parallel to line AC.
+E = on_pline E A C B
+---
+P is a points such that P is on a line through J and at right angle to line KF.
+P = on_tline P K F J
+---
+H is defined such that the orthocenter of triangle CEB is H.
+H = orthocenter H C E B
+---
+ACDE is a parallelogram.
+E = parallelogram A C D E
+---
+Let E, G, H, I, & F be points such that EFGHI is a pentagon.
+E F G H I = pentagon E F G H I
+---
+Let J be a point such that J, G, A are three consecutive vertices of a square.
+J = psquare J G A
+---
+B, C, D, and A are defined such that ABCD is a quadrilateral.
+A B C D = quadrangle A B C D
+---
+Let A, B, C, and D be points such that ABCD is a right angle trapezoid, with AB âŠ¥ to AD.
+A B C D = r_trapezoid A B C D
+---
+Define points A, B, C such that ABC is a right triangle, with the right angle ar A.
+A B C = r_triangle A B C
+---
+ABCD is a rectangle.
+A B C D = rectangle A B C D
+---
+Let J be a point such that J is the reflection of G over line EB.
+J = reflect J G E B
+---
+Points B, A, & C are defined such that B, A, C is a right angle isosceles triangle with the right angle at A.
+A B C = risos A B C
+---
+M is such that âˆ EGM is congruent to 90 degrees.
+s_angle E G M 90
+---
+Define points E, F such that E, F is a segment of line EF.
+E F = segment E F
+---
+D is defined such that line DB is the result of shifting line AC.
+D = shift D B A C
+---
+Points M, N are defined such that AGMN is a square.
+M N = square A G M N
+---
+A, D, C, and B are point such that given line AB, construct C and D such that ABCD is a square.
+A B C D = isquare A B C D
+---
+Let A, D, C, & B be points such that ABCD is a trapezoid.
+A B C D = trapezoid A B C D
+---
+B, A, & C are defined such that ABC is a triangle ABC.
+A B C = triangle A B C
+---
+Points C, B, and A are defined such that ABC is a triangle ABC, such that A & B is 2:1 in length to that of C and B.
+A B C = triangle12 A B C
+---
+Line CA and line DA are tangents to a circle centered at B at point E and F respectively. The circle centered at B touches circle centered at B with radius BC at H.
+E F G H = 2l1c E F G H C D A B
+---
+Line DI line IC and line CD are sides of triangle DIC. line JK intersects line DI at K, line IC at L and line CD at J such that JK is equal to KL.
+J K L = 3peq J K L D I C
+---
+E and F two points on line BA of triangle BCA such that ∠BCA is trisected by EA and AF.
+E F = trisect E F B C A
+---
+Define points E, F such that E and F are such points on line BC that EB is equivalent to EF is equivalent to FC.
+E F = trisegment E F B C
+---
+G is on the circle which has line DA as diameter.
+G = on_dia G D A
+---
+G, E, & F are defined such that triangle EFG is an equilateral triangle.
+E F G = ieq_triangle E F G
+---
+E is on the extended line line BA.
+E = on_opline E B A
+---
+Let F, H, I, and G be points such that line FG and line HI are common tangents to circle centered at B with radius BA and circle centered at E with radius ED at points F, G and H, I respectively.
+F G H I = cc_tangent F G H I B A E D
+---
+∠GFA is congruent to ∠BDC.
+eqangle3 G F A B D C
+---
+Points F & E are defined such that line EA and line FA are the two tangents to circle centered at D with radius DB at point E and F respectively.
+E F = tangent E F A D B
+---
+Define point E such that E is on the circumcircle of triangle DCB.
+E = on_circum E D C B
+
+
+Here are some examples of the formalization with the YAML format:
+Example 1: A, D, B, C are point such that A, D, B, C is a quadrilateral with line BC is equal to line AD. Points F, G, E, and H are defined such that EFGH is a quadrilateral. Line BG and line DC are parallel. line AI perpendicular to line BG. line HI perpendicular to line DC. line AI crosses line HI at the point I.
+A B C D = eq_quadrangle A B C D; E F G H = quadrangle E F G H; I = intersection_tt I A B G H D C
+---
+Example 2: Define points A, B, D, & C such that A, C, D, B forms a quadrilateral where line AC is equal to line BD. Define point E such that E is the orthocenter of triangle ACD. Define point F such that line FE is tangent to circle centered at A with radius AE at F. Let H, I, G, J be points such that line GH and line IJ are common tangents to circle centered at F with radius FB and circle centered at A with radius AC at points G, H and I, J respectively.. Let K be a point such that K is a angle bisector of ∠EAB.
+A B C D = eqdia_quadrangle A B C D; E = orthocenter E A C D; F = lc_tangent F E A; G H I J = cc_tangent G H I J F B A C; K = angle_bisector K E A B
+---
+Example 3: Let B, C, A, and D be points such that ABCD is a right angle trapezoid, with AB âŠ¥ to AD. E is defined such that the excenter of triangle BCA is E. Points G, H, & F are defined such that FGH is a triangle FGH. I is defined such that I is on a line through G and parallel to line DH. J is defined such that J is on line HC. K is a points such that K is a point such that line KG = line HJ.
+A B C D = r_trapezoid A B C D; E = excenter E B C A; F G H = triangle F G H; I = on_pline I D H G; J = on_line J H C; K = eqdistance K G H J
+---
+Now formalize the following geometry problem and answer only with the specified format:
+Let A, B, C, & D be points such that in quadrilateral ABCD, line AC = line BD. E, G, F, H, I are point such that EFGHI is a pentagon. Define point J such that J is the point of meeting point of the angle bisectors of triangle FHA. K is a points such that ∠KEG is equal to ∠CBHandline KG equals line CI.
