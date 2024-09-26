@@ -30,12 +30,12 @@ problems = {
                    ' the angles ∠BAC and ∠MON intersect at R. Prove that the circumcircles of the triangles BMR and '
                    'CNR have a common point lying on the side BC.',
     'imo_2004_p5':  'In a convex quadrilateral ABCD, the diagonal BD bisects neither the angle ABC nor the angle CDA.'
-                    ' The point P lies inside ABCD and satisfies ∠P BC = ∠DBA and ∠P DC = ∠BDA. Prove that ABCD is '
+                    ' The point P lies inside ABCD and satisfies ∠PBC = ∠DBA and ∠PDC = ∠BDA. Prove that ABCD is '
                     'a cyclic quadrilateral if and only if AP = CP.',
     'imo_2005_p5': 'Let ABCD be a fixed convex quadrilateral with BC = DA and BC ∦ DA. Let two variable points E '
                    'and F lie on the sides BC and DA, respectively, and satisfy BE = DF. The lines AC and BD meet at '
                    'P, the lines BD and EF meet at Q, the lines EF and AC meet at R. Prove that the circumcircles '
-                   'of the triangles P QR, as E and F vary, have a common point other than P.',
+                   'of the triangles PQR, as E and F vary, have a common point other than P.',
     'imo_2007_p4': 'In triangle ABC the bisector of ∠BCA meets the circumcircle again at R, the perpendicular '
                    'bisector of BC at P, and the perpendicular bisector of AC at Q. The midpoint of BC is K and the'
                    ' midpoint of AC is L. Prove that the triangles RPK and RQL have the same area.'

@@ -619,12 +619,12 @@ on_tline: # x a b c
 
     rules:
         point: [0]
-        line: [1, 2] # a, b
-        point2: [3] # c
-        perp: {type: literal, args: ['perpendicular', 'at right angle']}
+        line: [2, 3] # b, c
+        point2: [1] # a
+        perp: {type: literal, args: ['perpendicular']}
 
     templates:
-        - "{point} is on a line through {point2} and {perp} to {line}"
+        - "{point} is on a {perp} line through {point2} to {line}"
 
 orthocenter: # x a b c
     num_args: 4

@@ -4,7 +4,8 @@ import re
 from torch.utils.data import DataLoader
 
 from accelerate import Accelerator
-from hf_dataset import AlwaysSameElementDataset, CombinedDataset, MixedDatasetSampler, prepare_data
+from hf_dataset import (AlwaysSameElementDataset, CombinedDataset, MixedDatasetSampler, prepare_data,
+                        shuffle_sentences_in_batch)
 from model_preparation import load_model
 from transformers import get_scheduler
 from torch.optim import AdamW
@@ -51,15 +52,13 @@ def main(args):
     # synthetic_nl_fl_file = 'nl_fl.csv'
     synthetic_nl_fl_file = 'nl_fl_long.csv'
     non_rephrased_dataset = prepare_data(
-        os.path.join(args.dataset_dir, synthetic_nl_fl_file) , seed=seed, nrows=args.nrows_nonrephrased
-    )
+        os.path.join(args.dataset_dir, synthetic_nl_fl_file) , seed=seed, nrows=args.nrows_nonrephrased)
     # rephrased_file_name = 'rephrased-nl_fl_dataset_all.jsonl'
     # rephrased_file_name = 'all_rephrased_chunks.csv'
     rephrased_file_name = 'rephrases-10k.csv'
     rephrased_dataset = prepare_data(
         os.path.join(args.dataset_dir, rephrased_file_name), seed=seed, nrows=args.nrows_rephrased,
-        colnames={"formal": "fl_statement", "natural": "rephrase", "total_token_lens": "total_token_lens"}
-    )
+        colnames={"formal": "fl_statement", "natural": "rephrase", "total_token_lens": "total_token_lens"})
     rephrased_dataset = rephrased_dataset.filter(lambda x: x["total_token_lens"] < 1500 and x["natural"])
     # import ipdb; ipdb.set_trace()
     rephrased_dataset = rephrased_dataset.map(
@@ -137,6 +136,7 @@ def main(args):
             formal_texts, natural_texts = apply_start_end_tags(
                 batch['formal'], batch['natural'], [args.formal_init_tok, args.formal_end_tok],
                 [args.natural_init_tok, args.natural_end_tok])
+            natural_texts = shuffle_sentences_in_batch(natural_texts) if args.shuffle_sentences else natural_texts
 
             formal_inputs, natural_inputs = prepare_formal_natural_inputs(
                 formal_texts, natural_texts, tokenizer=tokenizer,

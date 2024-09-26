@@ -48,7 +48,7 @@ def main():
     cc_gen = CompoundClauseGen(definitions, 2, 3, 2, 42,
                                shuffle_var_names=False)
     txt = cc_gen.generate_clauses()
-    txt = 'A B C = ieq_triangle A B C; D = angle_mirror D A C B; E F G H = incenter2 E F G H C A D'
+    txt = 'a b = segment a b; g1 = on_tline g1 a a b; g2 = on_tline g2 b b a; m = on_circle m g1 a, on_circle m g2 b; n = on_circle n g1 a, on_circle n g2 b; c = on_pline c m a b, on_circle c g1 a; d = on_pline d m a b, on_circle d g2 b; e = on_line e a c, on_line e b d; p = on_line p a n, on_line p c d; q = on_line q b n, on_line q c d ? cong e p e q'
     # txt = 'A B C X = eq_trapezoid X A B C'
     # txt = 'B = free B; A = free A; C = free C; D = orthocenter D A B C'
         # txt = 'A B C = risos A B C; D = eqangle2 D C A B; E = angle_mirror E A D C, angle_mirror E D A C; F = orthocenter F D B C; G H = on_pline G A E F, angle_mirror H E A B'
@@ -58,7 +58,7 @@ def main():
     # txt = 'b c = segment b c; o = midpoint o b c; a = on_circle a o b; d = on_circle d o b, on_bline d a b; e = on_bline e o a, on_circle e o b; f = on_bline f o a, on_circle f o b; j = on_pline j o a d, on_line j a c ? eqangle c e c j c j c f'
     # txt = 'A B C D = quadrangle A B C D; E F G H = incenter2 E F G H B C D; I = on_tline I B A D; J = angle_mirror J G C A, on_opline E G; K L M N = excenter2 K L M N A J G; O P Q R = r_trapezoid O P Q R; S T = on_pline S A C D, angle_bisector T R B G'
 
-    # txt = txt.split('?')[0].strip()
+    txt = txt.split('?')[0].strip()
     print(txt)
 
     problem = pr.Problem.from_txt(txt)

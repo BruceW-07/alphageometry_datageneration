@@ -43,8 +43,11 @@ def generate_text(model, tokenizer, fl_init_end_toks, nl_init_end_toks,
         'eos_token_id': tokenizer.eos_token_id
     }
 
-    natural_texts = nl_init_end_toks[0] + natural_texts + nl_init_end_toks[1] + fl_init_end_toks[0]
+    natural_texts = (nl_init_end_toks[0] + natural_texts + nl_init_end_toks[1] + tokenizer.bos_token
+                     + fl_init_end_toks[0])
     inputs = tokenizer(natural_texts, return_tensors='pt', max_length=2048, truncation=True).to(model.device)
+
+    # import ipdb; ipdb.set_trace()
 
     # Generate output using specified strategy
     with torch.no_grad():
@@ -55,9 +58,9 @@ def generate_text(model, tokenizer, fl_init_end_toks, nl_init_end_toks,
 
 
 def main():
-    # from imo_problems import problems
+    from imo_problems import problems
     # from geos_problems import problems
-    from gpt4_rephrased_problems import problems
+    # from gpt4_rephrased_problems import problems
     parser = argparse.ArgumentParser(description="Generate text from a pretrained model")
     parser.add_argument("-ckpt", "--checkpoint_path", type=str, required=True,
                         help="Path to the DeepSpeed model checkpoint directory")

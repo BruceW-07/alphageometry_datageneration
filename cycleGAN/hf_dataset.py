@@ -4,6 +4,23 @@
 
 import numpy as np
 from datasets import load_dataset, DatasetDict, Dataset
+import random
+import nltk
+
+nltk.download('punkt')
+
+
+def shuffle_sentences_in_batch(texts):
+    result = []
+    for text in texts:
+        # Split each text into sentences
+        sentences = nltk.sent_tokenize(text)
+        # Shuffle the sentences
+        random.shuffle(sentences)
+        # Join the shuffled sentences back into a single string
+        result.append(' '.join(sentences))
+    # Return the modified texts in the 'natural' column
+    return result
 
 
 def detect_hf_dataset_load_type(filename) -> str:

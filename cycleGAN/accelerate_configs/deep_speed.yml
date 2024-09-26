@@ -22,7 +22,7 @@ fsdp_config: {}
 downcast_bf16: 'no'
 enable_cpu_affinity: true  # Enable to improve CPU utilization and potentially enhance performance
 machine_rank: 0
-main_process_ip: 172.22.2.144  #0.0.0.0
+main_process_ip: 0.0.0.0
 main_process_port: 3630
 main_training_function: main
 # Makes it faster. But use bf16 has larger dynamic range!
