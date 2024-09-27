@@ -1,8 +1,7 @@
 import sys
+sys.path.append('..')
 
 from utils.loading_utils import load_definitions_and_rules
-
-sys.path.append('..')
 import random
 import ddar
 from alphageometry import write_solution
@@ -12,6 +11,7 @@ from clause_generation import CompoundClauseGen
 import signal
 import copy
 from draw_svg.get_svg import draw_svg
+from cycleGAN.my_utils.point_naming_util import rename_point_names, reverse_mapping
 
 
 def convert_var_names_from_alpha_geo_names(var_map, goal_statement_as_list):
@@ -40,8 +40,8 @@ def main():
     random.seed(4)
     # Example entities and conditions for illustration purposes
 
-    # defs_path = '../defs.txt'
-    defs_path = '../wrong_defs.txt'
+    defs_path = '../defs.txt'
+    # defs_path = '../wrong_defs.txt'
     rules_path = '../rules.txt'
 
     # Load definitions and rules
@@ -49,7 +49,13 @@ def main():
     cc_gen = CompoundClauseGen(definitions, 2, 3, 2, 42,
                                shuffle_var_names=False)
     txt = cc_gen.generate_clauses()
-    txt = 'a b = segment a b; g1 = on_tline g1 a a b; g2 = on_tline g2 b b a; m = on_circle m g1 a, on_circle m g2 b; n = on_circle n g1 a, on_circle n g2 b; c = on_pline c m a b, on_circle c g1 a; d = on_pline d m a b, on_circle d g2 b; e = on_line e a c, on_line e b d; p = on_line p a n, on_line p c d; q = on_line q b n, on_line q c d ? cong e p e q'
+    # txt = 'a b c d = rectangle a b c d; e = on_line e a c, on_line e b d'
+    txt = ('a b = segment a b; g1 = on_tline g1 a a b; g2 = on_tline g2 b b a; '
+           'm = on_circle m g1 a, on_circle m g2 b; n = on_circle n g1 a, on_circle n g2 b; '
+           'c = on_pline c m a b, on_circle c g1 a; d = on_pline d m a b, on_circle d g2 b; '
+           'e = on_line e b d, on_line e a c; '
+           'p = on_line p a n, on_line p c d; q = on_line q b n, on_line q c d ? cong e p e q')
+    # txt = 'a b c = risos a b c'
     # txt = 'A B C X = eq_trapezoid X A B C'
     # txt = 'B = free B; A = free A; C = free C; D = orthocenter D A B C'
         # txt = 'A B C = risos A B C; D = eqangle2 D C A B; E = angle_mirror E A D C, angle_mirror E D A C; F = orthocenter F D B C; G H = on_pline G A E F, angle_mirror H E A B'
@@ -59,25 +65,30 @@ def main():
     # txt = 'b c = segment b c; o = midpoint o b c; a = on_circle a o b; d = on_circle d o b, on_bline d a b; e = on_bline e o a, on_circle e o b; f = on_bline f o a, on_circle f o b; j = on_pline j o a d, on_line j a c ? eqangle c e c j c j c f'
     # txt = 'A B C D = quadrangle A B C D; E F G H = incenter2 E F G H B C D; I = on_tline I B A D; J = angle_mirror J G C A, on_opline E G; K L M N = excenter2 K L M N A J G; O P Q R = r_trapezoid O P Q R; S T = on_pline S A C D, angle_bisector T R B G'
 
-    txt = txt.split('?')[0].strip()
-    print(txt)
+    org_2_alpha_geo, renamed_txt = rename_point_names(txt)
+    alpha_geo_2_org = reverse_mapping(org_2_alpha_geo)
+    print(f'alpha_geo_2_org:\n{org_2_alpha_geo}')
 
-    problem = pr.Problem.from_txt(txt)
+    txt, goal_str = txt.split('?')
+    # print(txt)
+
+    problem = pr.Problem.from_txt(txt.strip())
 
     print(f'Problem created, Building graph ...')
     try:
         # Set an alarm for 10 seconds
-        signal.alarm(1000)
+        # signal.alarm(1000)
 
         # Code block to execute with timeout
         graph, _ = gh.Graph.build_problem(problem, definitions)
 
         # Disable the alarm
-        signal.alarm(0)
+        # signal.alarm(0)
     except TimeoutException as e:
         print("Graph couldn't bre create in reasonable time. Perhaps problem with the premises. Exiting ...")
         raise e
 
+    # import ipdb; ipdb.set_trace()
     # Additionaly draw this generated problem
     gh.nm.draw(
         graph.type2nodes[gh.Point],
@@ -89,7 +100,10 @@ def main():
         graph.type2nodes[gh.Point],
         graph.type2nodes[gh.Line],
         graph.type2nodes[gh.Circle],
-        graph.type2nodes[gh.Segment])
+        graph.type2nodes[gh.Segment],
+        alpha_geo_2_org=alpha_geo_2_org,
+        org_2_alpha_geo=org_2_alpha_geo,
+        goal_str=goal_str.strip())
 
     # Write SVG code to a file
     with open('output.svg', 'w') as f:

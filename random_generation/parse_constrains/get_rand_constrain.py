@@ -1,5 +1,6 @@
 from pretty import pretty_nl
 import random
+from itertools import permutations
 
 
 class ConstraintGenerator:
@@ -40,7 +41,7 @@ class ConstraintGenerator:
                             cnst_name = cnst_components[0]
                             args = cnst_components[1:]
                             # Don't add goal constrains that are not pretty printable.
-                            # most likely they are non-provable constraints anyway!
+                            # Most likely they are non-provable constraints anyway!
                             if pretty_nl(cnst_name, args) is None:
                                 continue
                             # Create argument placeholders, keeping track of repeated arguments
@@ -110,6 +111,43 @@ class ConstraintGenerator:
             instanciated_constraint = cnst_name + ' ' + ' '.join(args)
             return instanciated_constraint
 
+    def print_all_constraints(self, points):
+        """Instantiate and print all possible constraints with the given points."""
+        from itertools import permutations
+
+        total_constraints = 0
+        for cnst_name, templates in self.constraints.items():
+            for template_entry in templates:
+                num_unique_args = template_entry['num_unique_args']
+                num_args = template_entry['num_args']
+
+                # Check if we have enough points to fill unique arguments
+                if num_unique_args <= len(points):
+                    # Generate all permutations of point names of length num_unique_args
+                    unique_arg_permutations = permutations(points, num_unique_args)
+
+                    # For each permutation, generate the constraint
+                    for unique_args in unique_arg_permutations:
+                        # Map placeholders to unique_args
+                        placeholder_map = {}
+                        arg_counter = 1
+                        for arg in unique_args:
+                            placeholder = f'{{arg{arg_counter}}}'
+                            placeholder_map[placeholder] = arg
+                            arg_counter += 1
+
+                        # Since arg_pattern may have repeated placeholders, we need to replace according to arg_pattern
+                        args = []
+                        for placeholder in template_entry['arg_pattern']:
+                            args.append(placeholder_map[placeholder])
+
+                        # Instantiate the constraint
+                        instantiated_constraint = cnst_name + ' ' + ' '.join(args)
+                        print(instantiated_constraint)
+                        total_constraints += 1
+
+        print(f"\nTotal instantiated constraints: {total_constraints}")
+
 
 # Example usage
 if __name__ == "__main__":
@@ -122,4 +160,9 @@ if __name__ == "__main__":
     # Generate a constraint
     constraint = generator.generate_constraint(points)
     if constraint:
+        print("Randomly generated constraint:")
         print(constraint)
+
+    # Print all instantiated constraints
+    print("\nAll instantiated constraints:")
+    generator.print_all_constraints(points)
