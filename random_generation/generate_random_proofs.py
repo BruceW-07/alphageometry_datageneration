@@ -7,7 +7,7 @@ import ddar
 from alphageometry import write_solution
 import graph as gh
 import problem as pr
-from clause_generation import CompoundClauseGen
+from random_generation.clause_generation import CompoundClauseGen
 import signal
 import copy
 from draw_svg.get_svg import draw_svg
@@ -65,7 +65,7 @@ def main():
     # txt = 'b c = segment b c; o = midpoint o b c; a = on_circle a o b; d = on_circle d o b, on_bline d a b; e = on_bline e o a, on_circle e o b; f = on_bline f o a, on_circle f o b; j = on_pline j o a d, on_line j a c ? eqangle c e c j c j c f'
     # txt = 'A B C D = quadrangle A B C D; E F G H = incenter2 E F G H B C D; I = on_tline I B A D; J = angle_mirror J G C A, on_opline E G; K L M N = excenter2 K L M N A J G; O P Q R = r_trapezoid O P Q R; S T = on_pline S A C D, angle_bisector T R B G'
 
-    org_2_alpha_geo, renamed_txt = rename_point_names(txt)
+    org_2_alpha_geo, renamed_txt = rename_point_names(set(definitions.keys()), txt)
     alpha_geo_2_org = reverse_mapping(org_2_alpha_geo)
     print(f'alpha_geo_2_org:\n{org_2_alpha_geo}')
 
@@ -85,7 +85,7 @@ def main():
         # Disable the alarm
         # signal.alarm(0)
     except TimeoutException as e:
-        print("Graph couldn't bre create in reasonable time. Perhaps problem with the premises. Exiting ...")
+        print("Graph couldn't be create in reasonable time. Perhaps problem with the premises. Exiting ...")
         raise e
 
     # import ipdb; ipdb.set_trace()

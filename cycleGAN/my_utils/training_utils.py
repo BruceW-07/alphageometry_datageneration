@@ -61,13 +61,13 @@ def prepare_formal_natural_inputs(formal_texts, natural_texts, tokenizer, return
     Prepare inputs for the model by tokenizing and converting to tensors on right device
     """
     # Encode formal to natural
-    formal_inputs = tokenizer(formal_texts, return_tensors='pt', padding=True, truncation=True, max_length=1024)
+    formal_inputs = tokenizer(formal_texts, return_tensors='pt', padding=True, truncation=True, max_length=2048)
     # Ensure inputs are on the right device
     formal_inputs = {k: v.to(PartialState().device) for k, v in formal_inputs.items()}
 
     # This has to be deterministic else some process will wait for the others!
     if return_natural_inputs:
-        natural_inputs = tokenizer(natural_texts, return_tensors='pt', padding=True, truncation=True, max_length=1024)
+        natural_inputs = tokenizer(natural_texts, return_tensors='pt', padding=True, truncation=True, max_length=2048)
         # Ensure inputs are on the right device
         natural_inputs = {k: v.to(PartialState().device) for k, v in natural_inputs.items()}
     else:

@@ -1,6 +1,6 @@
 import re
 
-def rename_point_names(problem_description):
+def rename_point_names(function_names, problem_description):
     """
     Renames point names in a formal geometry problem description according to predetermined names.
 
@@ -11,7 +11,7 @@ def rename_point_names(problem_description):
     - renamed_problem_description (str): The problem description with point names renamed.
     """
     # List of function names and reserved words
-    function_names = {'segment', 'on_tline', 'on_circle', 'on_pline', 'on_line', 'cong'}
+    # function_names = {'segment', 'on_tline', 'on_circle', 'on_pline', 'on_line', 'cong'}
     operators = {'=', ',', ';', '?'}
     reserved_words = function_names.union(operators)
 

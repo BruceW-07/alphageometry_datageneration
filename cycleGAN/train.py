@@ -50,7 +50,8 @@ def main(args):
     wrap_dataset = AlwaysSameElementDataset if args.overfitting else lambda x: x
     # Prepare dataset and dataloader
     # synthetic_nl_fl_file = 'nl_fl.csv'
-    synthetic_nl_fl_file = 'nl_fl_long.csv'
+    # synthetic_nl_fl_file = 'nl_fl_long.csv'
+    synthetic_nl_fl_file = 'svg_fl_long.csv'
     non_rephrased_dataset = prepare_data(
         os.path.join(args.dataset_dir, synthetic_nl_fl_file) , seed=seed, nrows=args.nrows_nonrephrased)
     # rephrased_file_name = 'rephrased-nl_fl_dataset_all.jsonl'
