@@ -1,6 +1,9 @@
 from typing import Any, Optional, Union
 
-from pygments.lexer import default
+import numpy as np
+
+from cycleGAN.plot_geometry_problems.mat_plot_lib_2_svg import SympyGeo2SVG
+from sympy.geometry import Point
 
 import geometry as gm
 from numericals import Point, Line, Circle
@@ -20,186 +23,35 @@ def draw_svg(
     goal_str = ''
 ) -> str:
     """Return SVG code for drawing everything on the same canvas."""
-    # Collect all coordinate points for scaling
-    all_x = []
-    all_y = []
-    for point in points:
-        all_x.append(point.num.x)
-        all_y.append(point.num.y)
+
+    svg_plotter = SympyGeo2SVG()
 
     for line in lines:
         line_points = line.neighbors(gm.Point)
-        for p in line_points:
-            all_x.append(p.num.x)
-            all_y.append(p.num.y)
+        pt0 = Point(line_points[0].num.x, line_points[0].num.y)
+        pt1 = Point(line_points[1].num.x, line_points[1].num.y)
+        svg_plotter.add_line(pt0, pt1)
+
     for circle in circles:
-        all_x.append(circle.num.center.x)
-        all_y.append(circle.num.center.y)
-        all_x.append(circle.num.center.x + circle.num.radius)
-        all_x.append(circle.num.center.x - circle.num.radius)
-        all_y.append(circle.num.center.y + circle.num.radius)
-        all_y.append(circle.num.center.y - circle.num.radius)
-
-    # Compute bounding box
-    min_x, max_x = min(all_x), max(all_x)
-    min_y, max_y = min(all_y), max(all_y)
-    width = max_x - min_x
-    height = max_y - min_y
-
-    # Scaling factors to fit SVG viewport
-    # Use the same scaling factor for x and y to maintain aspect ratio
-    scale = min(svg_width / width if width != 0 else 1, svg_height / height if height != 0 else 1) * 0.9  # Add padding
-
-    # Offsets to center the drawing
-    offset_x = (svg_width - (width * scale)) / 2 - min_x * scale
-    offset_y = (svg_height - (height * scale)) / 2 - min_y * scale
-
-    # Function to transform coordinates
-    def transform(p: Point) -> Point:
-        # Flip y-axis to have origin at bottom-left
-        x = p.x * scale + offset_x
-        y = svg_height - (p.y * scale + offset_y)
-        return Point(x, y)
-
-    # Collect SVG snippets
-    svg_elements = []
-
-    # Add a white background rectangle
-    svg_elements.append(f'<rect width="{svg_width}" height="{svg_height}" fill="white" />')
-
-    # Draw lines
-    for line in lines:
-        svg_code = draw_line_element_svg(line, transform, color='black')
-        if svg_code:
-            svg_elements.append(svg_code)
-
-    # Draw circles
-    for circle in circles:
-        svg_code = draw_circle_svg(circle, transform, scale, color='blue')
-        if svg_code:
-            svg_elements.append(svg_code)
-
-    # Draw segments (optional, if you have segments to draw)
-    # for segment in segments:
-    #     svg_code = draw_segment_svg(segment, transform, color='green')
-    #     if svg_code:
-    #         svg_elements.append(svg_code)
+        center = Point(circle.num.center.x, circle.num.center.y)
+        svg_plotter.add_circle(center, circle.num.radius)
 
     # Draw points
     point_name_2_loc = {}
     for point in points:
-        tp = transform(point.num)
-        svg_code = draw_point_svg(
-            tp,
-            point.name,
-            color='red',
-            rename_map=alpha_geo_2_org
-        )
-        svg_elements.append(svg_code)
-        point_name_2_loc[point.name] = (tp.x, tp.y)
+        point_name = alpha_geo_2_org.get(point.name.upper(), point.name.upper())
+        pt = Point(point.num.x, point.num.y)
+        svg_plotter.add_point(point_name, pt)
+        point_name_2_loc[point.name] = (pt.x, pt.y)
 
-    svg_elements.append(draw_goal(goal_str, point_name_2_loc, org_2_alpha_geo, color='green'))
+    draw_goal(goal_str, svg_plotter, point_name_2_loc, org_2_alpha_geo, color='green')
 
-    # Combine all SVG elements into a single SVG content
-    svg_content = '\n'.join(svg_elements)
-
-    # Create the full SVG code
-    svg_header = f'''<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="{svg_width}" height="{svg_height}">
-'''
-    svg_footer = '</svg>'
-
-    svg_code = svg_header + svg_content + svg_footer
-
-    return svg_code
+    return svg_plotter.get_svg_code()
 
 
-def draw_point_svg(
-    tp: Point,
-    name: str,
-    color: str = 'black',
-    size: float = 5,
-    rename_map = {}
-) -> str:
-    """Return SVG code for drawing a point."""
-    # Generate the circle element
-    svg_code = f'<circle cx="{tp.x}" cy="{tp.y}" r="{size}" fill="{color}" />\n'
-
-    # Determine position for the label
-    x_label, y_label = tp.x + 10, tp.y - 10  # Simple offset for label
-
-    # Add the text element
-    point_name = rename_map.get(name.upper(), name.upper())
-    svg_code += f'<text x="{x_label}" y="{y_label}" fill="{color}" font-size="{size * 2}">{point_name}</text>\n'
-
-    return svg_code
-
-def draw_line_svg(
-    p1: Point,
-    p2: Point,
-    transform,
-    color: str = 'black',
-    lw: float = 2,
-    alpha: float = 0.8,
-) -> str:
-    """Return SVG code for drawing a line between two points."""
-    # Transform the point coordinates
-    tp1 = transform(p1)
-    tp2 = transform(p2)
-
-    # Generate SVG line element
-    svg_code = f'<line x1="{tp1.x}" y1="{tp1.y}" x2="{tp2.x}" y2="{tp2.y}" stroke="{color}" stroke-width="{lw}" opacity="{alpha}" />\n'
-    return svg_code
-
-def draw_line_element_svg(
-    line: Line,
-    transform,
-    color: str = 'black',
-    lw: float = 2,
-    alpha: float = 0.8,
-) -> str:
-    """Return SVG code for drawing a line."""
-    points = line.neighbors(gm.Point)
-    if len(points) <= 1:
-        return ''
-    points = [p.num for p in points]
-    p1, p2 = points[:2]
-    return draw_line_svg(p1, p2, transform, color, lw, alpha)
-
-def draw_circle_svg(
-    circle: Circle,
-    transform,
-    scale: float,
-    color: str = 'cyan',
-    lw: float = 2,
-) -> str:
-    """Return SVG code for drawing a circle."""
-    # Ensure we have a numerical circle
-    if circle.num is not None:
-        circle = circle.num
-    else:
-        points = circle.neighbors(gm.Point)
-        if len(points) <= 2:
-            return ''
-        points = [p.num for p in points]
-        p1, p2, p3 = points[:3]
-        circle = Circle(p1=p1, p2=p2, p3=p3)
-
-    # Transform center
-    center = transform(circle.center)
-
-    # Scale radius
-    radius = circle.radius * scale
-
-    # Generate SVG circle element
-    svg_code = (f'<circle cx="{center.x}" cy="{center.y}" r="{radius}" stroke="{color}" '
-                f'stroke-width="{lw}" fill="none" />\n')
-    return svg_code
-
-
-def draw_perp(arg_pts, color, point_name_2_loc, forward_point_name_map):
+def draw_perp(svg_plotter, arg_pts, color, point_name_2_loc, forward_point_name_map):
     assert len(arg_pts) == 4
-    A, B, C, D, svg_cmd = draw_pair_of_lines(arg_pts, color, forward_point_name_map, point_name_2_loc)
+    A, B, C, D = draw_pair_of_lines(svg_plotter, arg_pts, color, forward_point_name_map, point_name_2_loc)
 
     # Compute the intersection point of the two lines (extended if necessary)
     def line_intersection_ext(A, B, C, D):
@@ -224,7 +76,8 @@ def draw_perp(arg_pts, color, point_name_2_loc, forward_point_name_map):
         Px, Py = intersection
 
         # Draw a small square at the intersection point
-        size = 10  # Size of the square
+        # Size of the square 10% of the minimum side length
+        size = min(np.linalg.norm(A - B), np.linalg.norm(C - D))/10
         # Calculate direction vectors for the two lines
         dx1, dy1 = B[0] - A[0], B[1] - A[1]
         length1 = (dx1 ** 2 + dy1 ** 2) ** 0.5
@@ -245,16 +98,15 @@ def draw_perp(arg_pts, color, point_name_2_loc, forward_point_name_map):
         x3, y3 = x0 - ux2 * size, y0 - uy2 * size
 
         # Create the path for the square (no fill, with stroke)
-        square_path = f'M {x0} {y0} L {x1} {y1} L {x2} {y2} L {x3} {y3} Z'
-        svg_cmd += f'<path d="{square_path}" fill="none" stroke="{color}" stroke-width="2"/>\n'
-    return svg_cmd
+        svg_plotter.add_line(Point(x0, y0), Point(x1, y1), clor=color)
+        svg_plotter.add_line(Point(x1, y1), Point(x2, y2), clor=color)
 
 
-def draw_congruent(arg_pts, color, point_name_2_loc, org_2_alpha_geo):
-    A, B, C, D, svg_cmd = draw_pair_of_lines(arg_pts, color, org_2_alpha_geo, point_name_2_loc)
+def draw_congruent(svg_plotter, arg_pts, color, point_name_2_loc, org_2_alpha_geo):
+    A, B, C, D = draw_pair_of_lines(svg_plotter, arg_pts, color, org_2_alpha_geo, point_name_2_loc)
 
     # Function to draw a tick mark on a line segment from P1 to P2
-    def draw_tick(P1, P2):
+    def draw_tick(svg_plotter, P1, P2, color):
         # Calculate the midpoint of the line segment
         x_mid = (P1[0] + P2[0]) / 2
         y_mid = (P1[1] + P2[1]) / 2
@@ -272,48 +124,45 @@ def draw_congruent(arg_pts, color, point_name_2_loc, org_2_alpha_geo):
         perp_ux = -uy
         perp_uy = ux
         # Length of the tick mark
-        tick_length = 10  # Adjust this value as needed
+        # tick length is 10% the line length
+        tick_length = np.linalg.norm(np.array(P1) - np.array(P2)) / 10
         # Calculate the endpoints of the tick mark
         x1 = x_mid - (perp_ux * tick_length / 2)
         y1 = y_mid - (perp_uy * tick_length / 2)
         x2 = x_mid + (perp_ux * tick_length / 2)
         y2 = y_mid + (perp_uy * tick_length / 2)
         # Return the SVG line element for the tick mark
-        return f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{color}" stroke-width="2"/>\n'
+        svg_plotter.add_line(Point(x1, y1), Point(x2, y2), color=color)
 
     # Draw tick marks on both line segments
-    svg_cmd += draw_tick(A, B)
-    svg_cmd += draw_tick(C, D)
-
-    return svg_cmd
+    draw_tick(svg_plotter, A, B, color=color)
+    draw_tick(svg_plotter, C, D, color=color)
 
 
-def draw_pair_of_lines(arg_pts, color, org_2_alpha_geo, point_name_2_loc):
+
+def draw_pair_of_lines(svg_plotter, arg_pts, color, org_2_alpha_geo, point_name_2_loc):
     assert len(arg_pts) == 4
     A = point_name_2_loc[org_2_alpha_geo[arg_pts[0]].lower()]
     B = point_name_2_loc[org_2_alpha_geo[arg_pts[1]].lower()]
     C = point_name_2_loc[org_2_alpha_geo[arg_pts[2]].lower()]
     D = point_name_2_loc[org_2_alpha_geo[arg_pts[3]].lower()]
     # Draw the two line segments
-    svg_cmd = (
-        f'<line x1="{A[0]}" y1="{A[1]}" x2="{B[0]}" y2="{B[1]}" stroke="{color}" stroke-width="2"/>\n'
-        f'<line x1="{C[0]}" y1="{C[1]}" x2="{D[0]}" y2="{D[1]}" stroke="{color}" stroke-width="2"/>\n')
-    return A, B, C, D, svg_cmd
+    svg_plotter.add_line(Point(A[0], A[1]), Point(B[0], B[1]), color=color)
+    svg_plotter.add_line(Point(C[0], C[1]), Point(D[0], D[1]), color=color)
+    return A, B, C, D
 
 
-def draw_goal(goal_str, point_name_2_loc, org_2_alpha_geo, color):
-    svg_cmd = ''
+def draw_goal(goal_str, svg_plotter, point_name_2_loc, org_2_alpha_geo, color):
     if goal_str == '':
-        return ''
+        return
 
     goal_cmd_w_args = goal_str.strip().split(' ')
     goal_cmd, arg_pts = goal_cmd_w_args[0], goal_cmd_w_args[1:]
 
     if goal_cmd.lower() == 'perp':
-        svg_cmd += draw_perp(arg_pts, color, point_name_2_loc, org_2_alpha_geo)
+        draw_perp(svg_plotter, arg_pts, color, point_name_2_loc, org_2_alpha_geo)
 
     if goal_cmd.lower() == 'cong':
-        svg_cmd += draw_congruent(arg_pts, color, point_name_2_loc, org_2_alpha_geo)
+        draw_congruent(svg_plotter, arg_pts, color, point_name_2_loc, org_2_alpha_geo)
 
-    return svg_cmd
 

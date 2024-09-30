@@ -68,7 +68,7 @@ def main():
     #                     default='X is a point. BCDE is a trapezoid. Let G, H, F, I be points such that the diagonals '
     #                             'of quadrilateral FGHI are equal. J is a points such that J is on line DA.',
     #                     help="Input text to generate text from")
-    parser.add_argument("--max_length", type=int, default=512, help="Maximum length of the generated text")
+    parser.add_argument("--max_length", type=int, default=2048, help="Maximum length of the generated text")
     parser.add_argument("--num_beams", type=int, default=10, help="Number of beams for beam search")
     parser.add_argument("--do_sample", action='store_true', help="Enable sampling for generation")
     parser.add_argument("--top_k", type=int, default=10, help="Top-K sampling")
@@ -85,11 +85,15 @@ def main():
     model, tokenizer = accelerator.prepare(model.decoder, tokenizer)
 
     # Generate text
-    for pr_id, problem_text in problems.items():
+    # for pr_id, problem_text in problems.items():
+    while True:
+        problem_text = input('give text problem \n')
         generated_text = generate_text(model, tokenizer, fl_init_end_toks, nl_init_end_toks,
                                        problem_text, args.max_length, args.num_beams, args.do_sample,
                                        args.top_k, args.top_p)
-        print(f'{pr_id}\n{generated_text}\n\n')
+        # print(f'{pr_id}<new_line>{generated_text}<new_line><new_line>')
+        print(f'\n{generated_text}\n\n')
+        # break
 
 
 if __name__ == "__main__":

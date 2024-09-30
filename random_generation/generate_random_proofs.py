@@ -70,6 +70,7 @@ def main():
     print(f'alpha_geo_2_org:\n{org_2_alpha_geo}')
 
     txt, goal_str = txt.split('?')
+    # goal_str = ''
     # print(txt)
 
     problem = pr.Problem.from_txt(txt.strip())
