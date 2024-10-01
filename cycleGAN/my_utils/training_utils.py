@@ -142,6 +142,7 @@ def decode_logits_or_inputs(tokenizer, logits_or_inputs, compress):
         # labels are not a dict, but a tensor of shape (batch_size, seq_len)
         token_ids = logits_or_inputs
     assert token_ids.ndim == 2
+    token_ids[token_ids == -100] = tokenizer.wait_token_id
     text = tokenizer.batch_decode(token_ids.cpu(), skip_special_tokens=False)
     if compress:
         return batch_compress_text_forwaiting_and_eot_tokens(text, eot_token=tokenizer.eos_token)

@@ -203,6 +203,7 @@ class AutoEncoderLLM(PreTrainedModel):
              when using decoder-only
             kwargs: extra args to pass to introduce_waiting_tokens
         """
+        kwargs['wait_token_id'] = -100  # TODO(FIX this hack!)
         assert formal_inputs is not None, "formal_inputs should not be None"
         decoder_outputs_from_natural = None
         perplexity_loss = None
@@ -346,6 +347,8 @@ def load_model(model_name, wait_token='<w>', use_pretrained=True, use_perplexity
     }
     tokenizer.add_special_tokens(special_tokens_dict)
     wait_id = tokenizer.convert_tokens_to_ids(wait_token)
+    setattr(tokenizer, 'wait_token', wait_token)
+    setattr(tokenizer, 'wait_token_id', wait_id)
 
     if encoder is not None:
         encoder.resize_token_embeddings(len(tokenizer))
