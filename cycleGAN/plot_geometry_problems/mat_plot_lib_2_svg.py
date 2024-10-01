@@ -62,10 +62,9 @@ class SympyGeo2SVG:
     def _svg_line(self, p1, p2, color='black', width=2):
         tp1 = self._sympy_geo_pt_to_svg_pt(p1)
         tp2 = self._sympy_geo_pt_to_svg_pt(p2)
-        # TODO: remove the opacity thing!
         self.svg_code.append(
             f'<line x1="{tp1.x:.5f}" y1="{tp1.y:.5f}" x2="{tp2.x:.5f}" y2="{tp2.y:.5f}" stroke="{color}" '
-            f'stroke-width="{width}" opacity="0.8" />')
+            f'stroke-width="{width}" />')
 
     def _svg_circle(self, center, radius, color='blue', fill='none'):
         t_center = self._sympy_geo_pt_to_svg_pt(center)
