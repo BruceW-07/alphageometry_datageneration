@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 
 from accelerate import Accelerator
 from hf_dataset import (AlwaysSameElementDataset, CombinedDataset, MixedDatasetSampler, prepare_data,
-                        shuffle_sentences_in_batch)
+                        shuffle_in_batch)
 from model_preparation import load_model
 from transformers import get_scheduler
 from torch.optim import AdamW
@@ -137,7 +137,7 @@ def main(args):
             formal_texts, natural_texts = apply_start_end_tags(
                 batch['formal'], batch['natural'], [args.formal_init_tok, args.formal_end_tok],
                 [args.natural_init_tok, args.natural_end_tok])
-            natural_texts = shuffle_sentences_in_batch(natural_texts) if args.shuffle_sentences else natural_texts
+            natural_texts = shuffle_in_batch(natural_texts, args.shuffle_type)
 
             formal_inputs, natural_inputs = prepare_formal_natural_inputs(
                 formal_texts, natural_texts, tokenizer=tokenizer,

@@ -3,6 +3,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 import math
+import tqdm
+
 
 def main():
     # Initialize data structures
@@ -16,11 +18,11 @@ def main():
     validation_losses_rephrase = {loss_type: [] for loss_type in loss_columns}
 
     root_dir = ('/is/cluster/fast/pghosh/ouputs/alpha_geo/cycle_gan/geometry'
-                '/meta-llama/Meta-Llama-3.1-8B_dec_only_11/validation_outputs/')
+                '/meta-llama/Meta-Llama-3.1-8B_dec_only_1/validation_outputs/')
     csv_files = glob.glob(os.path.join(root_dir, '*_fl_fl.csv'))
     csv_files.sort()  # Ensure files are processed in order
 
-    for csv_file in csv_files:
+    for csv_file in tqdm.tqdm(csv_files):
         # Extract batch index from filename (e.g., '0_24899_fl_fl.csv' -> 24899)
         base_name = os.path.basename(csv_file)
         batch_index = int(base_name.split('_')[1])

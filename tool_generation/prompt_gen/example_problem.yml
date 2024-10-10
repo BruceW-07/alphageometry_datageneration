@@ -1,0 +1,37 @@
+- problem:
+    description: "C is a point on the perpendicular bisector of AB. Prove that AC = BC."
+    usage: "isosceles_triangle C A B"
+    constraints:
+      - "free D" # Define a random point D.
+      - "midpoint D A B" # Define D to be the midpoint of segment AB
+      - "perp C D A B" # Define CD to be perpendicular to AB
+    goal:
+      - "cong A C B C"
+    comment_templates:
+      - "The line segment {arg1}{arg0} is same length as {arg2}{arg0} id {arg2} lies on the perpendicular bisector of {arg1}{arg2}."
+
+- problem:
+    description: "Imagine a circle passing through A, B, C and D. Prove that angle ABC = angle ADC."
+    usage: "equal_angles_of_a_chord A B C D"
+    constraints:
+      - "free A" # Define a random point A.
+      - "free B" # Define a random point B.
+      - "free C" # Define a random point C.
+      - "free D" # Define a random point D.
+      - "cyclic A B C D" # Define A, B, C, and D to lie on the circumference of a circle.
+    goal:
+      - "eqangle B A B C D A D C" # Define angle formed at B as ABC = angle formed at D as ADC
+    comment_templates:
+      - "Angle {arg0}{arg1}{arg2} = angle {arg0}{arg3}{arg2} if {arg0}, {arg1}, {arg2}, and {arg3} are four cyclic points."
+
+- problem:
+    description: "Imagine a right angle triangle XYZ."
+    usage: "right_angle_triangle X Y Z"
+    constraints:
+      - "free X" # Define a random point X.
+      - "free Y" # Define a random point Y.
+      - "free Z" # Define a random point Z.
+      - "perp X Y Y Z" # Define XY to be perpendicular to YZ
+    comment_templates:
+      - "{arg0}{arg1}{arg2} is a right angle triangle."
+

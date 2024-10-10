@@ -50,11 +50,9 @@ def main():
                                shuffle_var_names=False)
     txt = cc_gen.generate_clauses()
     # txt = 'a b c d = rectangle a b c d; e = on_line e a c, on_line e b d'
-    txt = ('a b = segment a b; g1 = on_tline g1 a a b; g2 = on_tline g2 b b a; '
-           'm = on_circle m g1 a, on_circle m g2 b; n = on_circle n g1 a, on_circle n g2 b; '
-           'c = on_pline c m a b, on_circle c g1 a; d = on_pline d m a b, on_circle d g2 b; '
-           'e = on_line e b d, on_line e a c; '
-           'p = on_line p a n, on_line p c d; q = on_line q b n, on_line q c d ? cong e p e q')
+    txt = ('A B C = triangle A B C; D = on_circum D C A B; E = on_circum E A C B; F = on_line F A C; G = on_line G A B, angle_bisector G B C A; Q = on_line Q E A; S = on_line S A B; Y = on_line Y E Q; X = on_bline X E Q? eqangle A B B C A D C D')
+    # txt = ''
+    # txt = 'Q = free Q; P M F = r_triangle P M F; E = lc_tangent E F Q; H = orthocenter H M Q P; V = reflect V F M Q; T S A = ieq_triangle T S A; L N J = triangle12 L N J; I G Z R Y = pentagon I G Z R Y; C = on_dia C A R, on_opline C J Q? eqangle A D D E J S Q S'
     # txt = 'a b c = risos a b c'
     # txt = 'A B C X = eq_trapezoid X A B C'
     # txt = 'B = free B; A = free A; C = free C; D = orthocenter D A B C'

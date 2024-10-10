@@ -1,0 +1,71 @@
+- name: "free"
+  comment: "free A - defines a random point A"
+  arguments: 1
+  verbalization_templates:
+    - "{arg0} is a point."
+
+- name: "eqangle"
+  comment: "eqangle A B C D E F - means angle ABC = angle DEF"
+  arguments: 6
+  verbalization_templates:
+    - "The angle {arg0}{arg1}{arg2} is equal to the angle {arg3}{arg4}{arg5}."
+
+- name: "cong"
+  comment: "cong A B - length of segment AB is equal to length of segment CD"
+  arguments: 4
+  verbalization_templates:
+    - "The segment {arg0}{arg1} is congruent to the segment {arg2}{arg3}."
+
+- name: "para"
+  comment: "para A B C D - Line AB is parallel to line CD"
+  arguments: 4
+  verbalization_templates:
+    - "Line {arg0}{arg1} is parallel to line {arg2}{arg3}."
+
+- name: "perp"
+  comment: "perp A B C D - Line AB is perpendicular to line CD"
+  arguments: 4
+  verbalization_templates:
+    - "Line {arg0}{arg1} is perpendicular to line {arg2}{arg3}."
+
+- name: "nperp"
+  comment: "nperp A B C D - Line AB is not perpendicular to line CD"
+  arguments: 4
+  verbalization_templates:
+    - "Line {arg0}{arg1} is not perpendicular to line {arg2}{arg3}."
+
+- name: "coll"
+  comment: "coll A B C - Points A, B, and C are collinear"
+  arguments: 3
+  verbalization_templates:
+    - "Points {arg0}, {arg1}, and {arg2} are collinear."
+
+- name: "npara"
+  comment: "npara A B C D - Line AB and line CD are not parallel"
+  arguments: 4
+  verbalization_templates:
+    - "Line {arg0}{arg1} is not parallel to line {arg2}{arg3}."
+
+- name: "ncoll"
+  comment: "ncoll A B C D - Points A, B, C, and D are not collinear"
+  arguments: 4
+  verbalization_templates:
+    - "Points {arg0}, {arg1}, {arg2}, and {arg3} are not collinear."
+
+- name: "s_angle"
+  comment: "s_angle A B C D - The angle ABC is D degrees"
+  arguments: 4
+  verbalization_templates:
+    - "The angle {arg0}{arg1}{arg2} is {arg3} degrees."
+
+- name: "rconst"
+  comment: "rconst A B C D E F - The ratio AB:CD is E:F"
+  arguments: 6
+  verbalization_templates:
+    - "The ratio of the length of segment {arg0}{arg1} to the length of segment {arg2}{arg3} is {arg4}:{arg5}."
+
+- name: "cyclic"
+  comment: "cyclic A B C D - Points A, B, C, and D lie on the circumference of a circle"
+  arguments: 4
+  verbalization_templates:
+    - "Points {arg0}, {arg1}, {arg2}, and {arg3} lie on the circumference of a circle."

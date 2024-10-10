@@ -63,20 +63,20 @@ class SympyGeo2SVG:
         tp1 = self._sympy_geo_pt_to_svg_pt(p1)
         tp2 = self._sympy_geo_pt_to_svg_pt(p2)
         self.svg_code.append(
-            f'<line x1="{tp1.x:.5f}" y1="{tp1.y:.5f}" x2="{tp2.x:.5f}" y2="{tp2.y:.5f}" stroke="{color}" '
-            f'stroke-width="{width}" />')
+            f'<line x1="{float(tp1.x)}" y1="{float(tp1.y)}" x2="{float(tp2.x)}" y2="{float(tp2.y)}" stroke="{color}" '
+            f'stroke-width="{width}"  />')
 
     def _svg_circle(self, center, radius, color='blue', fill='none'):
         t_center = self._sympy_geo_pt_to_svg_pt(center)
         t_radius = self.scale * radius
-        self.svg_code.append(f'<circle cx="{t_center.x:.5f}" cy="{t_center.y:.5f}" '
-                             f'r="{t_radius:.5f}" stroke="{color}" '
+        self.svg_code.append(f'<circle cx="{float(t_center.x)}" cy="{float(t_center.y)}" '
+                             f'r="{float(t_radius)}" stroke="{color}" '
                              f'stroke-width="2" fill="{fill}" />')
 
     def _svg_point(self, p, label, color='red'):
         tp = self._sympy_geo_pt_to_svg_pt(p)
-        self.svg_code.append(f'<circle cx="{tp.x:.5f}" cy="{tp.y:.5f}" r="5" fill="{color}" />'
-                             f'\n<text x="{(tp.x + 10):.5f}" y="{(tp.y + 10):.5f}" fill="{color}" '
+        self.svg_code.append(f'<circle cx="{float(tp.x)}" cy="{float(tp.y)}" r="5" fill="{color}" />'
+                             f'\n<text x="{float((tp.x + 10))}" y="{float((tp.y + 10))}" fill="{color}" '
                              f'font-size="10">{label}</text>')
 
     def add_line(self, A, B, color='black'):

@@ -1,0 +1,6 @@
+- name: tangent
+  arguments: 3
+  constraints:
+    - "perp {arg0} {arg1} {arg1} {arg3}"
+  verbalization_templates:
+    - "{arg1}{arg3} is tangent to the circle with center {arg0} and radius {arg0}{arg1}"

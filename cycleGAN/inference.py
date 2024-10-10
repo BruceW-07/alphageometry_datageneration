@@ -30,7 +30,7 @@ def load_model_for_inference(checkpoint_path):
                                                 use_perplexity_loss=False, use_decoder=data['use_decoder'],
                                                 use_encoder=data['use_encoder'], fl_init_end_toks=fl_init_end_toks,
                                                 nl_init_end_toks=nl_init_end_toks)
-    print(f'Loading model. Also takes a bit ...')
+    print(f'Loading model. Takes a bit ...')
     # load_sharded_checkpoint(ae_model, checkpoint_path)
     load_checkpoint_and_dispatch(ae_model, checkpoint_path, device_map="auto")
 
@@ -131,13 +131,21 @@ def main():
     # Generate text
     # for pr_id, problem_text in problems.items():
     while True:
-        problem_text = input('give text problem \n')
-        generated_text = generate_text(model, tokenizer, fl_init_end_toks=fl_init_end_toks, nl_init_end_toks=nl_init_end_toks,
-                                       nl_text=problem_text, max_length=args.max_length, num_beams=args.num_beams, do_sample=args.do_sample,
-                                       top_k=args.top_k, top_p=args.top_p)
-        # print(f'{pr_id}<new_line>{generated_text}<new_line><new_line>')
-        print(f'\n{generated_text}\n\n')
-        # break
+        problem_path = input('Give path to SVG file with text problem \n')
+        if problem_path.endswith('.svg'):
+            if os.path.exists(problem_path):
+                with open(problem_path, 'r') as file:
+                    problem_text = file.read()
+                generated_text = generate_text(model, tokenizer, fl_init_end_toks=fl_init_end_toks, nl_init_end_toks=nl_init_end_toks,
+                                               nl_text=problem_text, max_length=args.max_length, num_beams=args.num_beams, do_sample=args.do_sample,
+                                               top_k=args.top_k, top_p=args.top_p)
+                # print(f'{pr_id}<new_line>{generated_text}<new_line><new_line>')
+                print(f'\n{generated_text}\n\n')
+                # break
+            else:
+                print(f'No file at {problem_path}')
+        else:
+            print(f'Given path {problem_path} is not to an SVG file. Try again...')
 
 
 if __name__ == "__main__":

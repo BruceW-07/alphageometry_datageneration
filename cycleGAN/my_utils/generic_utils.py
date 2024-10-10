@@ -278,9 +278,9 @@ def get_cmd_args():
                         default=True)
     parser.add_argument('--dec_is_trainable', type=lambda x: True if x.lower() in ['true', '1'] else False,
                         default=True)
-    parser.add_argument('--shuffle_sentences',
-                        type=lambda x: True if x.lower() in ['true', '1'] else False,
-                        default=False)
+    parser.add_argument('--shuffle_type', type=lambda x: x.lower(), default='none',
+                        help='Kind of shuffle to apply in the natural text. sentence by sentence, '
+                             'every line with svg respected. Possible "none", "sentence", "svg_content"')
     parser.add_argument('--use_perplexity_loss',
                         type=lambda x: True if x.lower() in ['true', '1'] else False, default=True)
     parser.add_argument('--nrows_nonrephrased', type=int, default=None,

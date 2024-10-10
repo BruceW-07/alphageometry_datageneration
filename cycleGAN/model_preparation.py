@@ -107,6 +107,7 @@ def introduce_waiting_tokens(inputs, labels, wait_token_id, pad_token_id, paddin
         # set to zeros
         new_input_ids_or_embds = torch.full((bs, new_len, input_ids_or_embds.shape[2]), 0,
                                             dtype=input_ids_or_embds.dtype, device=device)
+        raise NotImplementedError(f' input copy over is not implemented properly for input embeds')
     else:
         new_input_ids_or_embds = torch.full((bs, new_len), pad_token_id, dtype=torch.long, device=device)
     new_attention_mask = torch.zeros((bs, new_len), dtype=torch.long, device=device)
@@ -119,8 +120,11 @@ def introduce_waiting_tokens(inputs, labels, wait_token_id, pad_token_id, paddin
             new_input_ids_or_embds[i, inputs_lens[i]:total_lens[i]] = labels[inp_type][i, :label_lens[i]]
         new_attention_mask[i, :total_lens[i]] = 1
         out_labels[i, inputs_lens[i]:total_lens[i]] = label_input_ids[i, :label_lens[i]]
-        out_labels[i, :inputs_lens[i]] = wait_token_id
-        
+        if wait_token_id < 0:
+            out_labels[i, :inputs_lens[i]] = input_ids_or_embds[i, :inputs_lens[i]]
+        else:
+            out_labels[i, :inputs_lens[i]] = wait_token_id
+
     return {
         "inputs_embeds" if input_ids_or_embds.ndim == 3 else "input_ids": new_input_ids_or_embds,
         "attention_mask": new_attention_mask,

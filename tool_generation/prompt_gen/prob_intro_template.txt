@@ -1,0 +1,16 @@
+I have a few predefined constraints.
+
+Atomic predefined constrains
+```
+{predefined_constraints}
+```
+
+Example:
+Natural Language problem:
+{example_problem}
+
+Your task:
+Extract the constraints from the problem below. Define missing constraints as needed. Put everything in YAML format nothing else.
+
+Natural Language problem:
+{nl_prob}
