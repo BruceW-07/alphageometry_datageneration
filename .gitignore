@@ -33,3 +33,4 @@ share/python-wheels/
 MANIFEST
 demo.csv
 sync_to_mpi_cluster.sh
+random_generation/dataset
