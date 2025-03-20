@@ -1,0 +1,6 @@
+pb1
+A B C D = eq_trapezoid A B C D; E F G = ieq_triangle E F G; H = eqangle3 H F G A B D; I = incenter I B E A; J = on_dia J G C, eqangle3 J E D B I A ? eqangle E G F G E G F G
+pb2
+A B C D E = pentagon A B C D E; F = parallelogram E D C F; G = eqangle3 G A D C B E; H = eqangle2 H E C D; I = angle_mirror I A G C, on_pline I D E H; J = eqdistance J I A B; K = intersection_pp K C H G J I A; L = excenter L B A K; M = eq_triangle M F K; N = intersection_ll N K J B H; O = on_dia O A J, on_aline O G E M L K ? cong C F D E
+pb3
+A B C D = eqdia_quadrangle A B C D; E = circle E B C D; F = psquare F B C; G H I = risos G H I; J K L = 3peq J K L D B C; M N O = r_triangle M N O ? npara G I M N
