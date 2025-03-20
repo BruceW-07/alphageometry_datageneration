@@ -33,8 +33,11 @@ share/python-wheels/
 MANIFEST
 demo.csv
 sync_to_mpi_cluster.sh
-random_generation/dataset
+random_generation/dataset/
+random_generation/filtered_dataset/
+random_generation/filtered_dataset_with_aux/
 output/
 bin/
 share/
 pyvenv.cfg
+
