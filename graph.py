@@ -521,12 +521,14 @@ class Graph:
       except (nm.InvalidLineIntersectError, nm.InvalidQuadSolveError):
         continue
       except DepCheckFailError:
-        continue
+        # continue
+        raise DepCheckFailError()
       except (PointTooCloseError, PointTooFarError):
         # break #todo: Partha: I think this is to make sure the problem drawing looks nice. So breaking is not bad. 
         # Max: should still continue adding other points, so "continue"
         # Sometimes it gets indefinitely stuck!
         continue
+        # break
 
       if not pr.goal:
         break

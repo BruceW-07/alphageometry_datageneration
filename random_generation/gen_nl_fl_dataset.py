@@ -87,6 +87,9 @@ def construct_problem_and_graph(fl_statement, definitions, set_timeout=True):
         print(e)
         # TODO(Partha, Max, Felix): This is a hack to avoid the AttributeError. We should fix this.
         return None, None
+    except gh.DepCheckFailError:
+        print("Dependence check fail while building graph. Continuing ...")
+        return None, None
 
     return problem, graph
 
