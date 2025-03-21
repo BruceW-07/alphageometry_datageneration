@@ -41,3 +41,4 @@ bin/
 share/
 pyvenv.cfg
 
+random_generation/execution_time.log

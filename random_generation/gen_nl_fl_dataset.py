@@ -5,6 +5,7 @@ sys.path.append('..')
 import random
 import ddar
 import graph as gh
+import numericals as nm
 import problem as pr
 from clause_generation import CompoundClauseGen
 import signal
@@ -112,7 +113,7 @@ def main(run_id, interactive, num_sol_depth):
 
     # field_names = ['sl_n', 'num_clauses', 'nl_statement', 'fl_statement', 'goal_nl', 'goal_fl', 'rnd_states']
     field_names = ['sl_n', 'num_clauses', 'nl_statement', 'fl_statement', 'nl_solution', 'fl_solution','w_goal_nl_1',
-                   'w_goal_fl_1', 'w_goal_nl_2', 'w_goal_fl_2', 'w_goal_nl_3', 'w_goal_fl_3']
+                    'w_goal_fl_1', 'w_goal_nl_2', 'w_goal_fl_2', 'w_goal_nl_3', 'w_goal_fl_3']
 
     # Write data to the CSV file
     wrong_goal_generator = ConstraintGenerator(rules_path)
@@ -123,10 +124,11 @@ def main(run_id, interactive, num_sol_depth):
         writer.writeheader()
         serial_num = run_id * dataset_length
         cc_gen = CompoundClauseGen(definitions, max_comma_sep_clause=3, max_single_clause=7, max_sets=2, seed=run_id,
-                                   shuffle_var_names=False)
+                                    shuffle_var_names=False)
         verbalizer = IndependentStatementVerbalization(None)
 
-        for i in range(dataset_length):
+        # for i in range(dataset_length):
+        while serial_num < (run_id + 1) * dataset_length:
             fl_statement = cc_gen.generate_clauses()
             num_clauses = 0
             for clause in fl_statement.split(';'):
@@ -142,7 +144,15 @@ def main(run_id, interactive, num_sol_depth):
 
             if interactive: print(f'Solving ...')
 
-            ddar.solve(graph, rules, problem, max_level=num_sol_depth)
+            try:
+                ddar.solve(graph, rules, problem, max_level=num_sol_depth)
+            except ValueError:
+                print("Encountered ValueError while solving. Continuing ...")
+                continue
+            except (nm.InvalidLineIntersectError, nm.InvalidQuadSolveError):
+                print("Encountered InvalidLineIntersectError or InvalidQuadSolveError while solving. Continuing ...")
+                continue
+
 
             # Randomly select a cache node to be the goal. #TODO: Is this right can we do better? Consider coverage!
             possible_goals = list(graph.cache.keys())
@@ -151,6 +161,7 @@ def main(run_id, interactive, num_sol_depth):
                 # goal_fl = random.choice(possible_goals + [''])  # uncomment this line to get goal less problems
                 if goal_fl == '':
                     goal_nl = ''
+                    continue
                 else:
                     # get proof
                     goal = pr.Construction(goal_fl[0], list(goal_fl[1:]))

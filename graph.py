@@ -520,6 +520,7 @@ class Graph:
 
       except (nm.InvalidLineIntersectError, nm.InvalidQuadSolveError):
         continue
+        # return None, None
       except DepCheckFailError:
         # continue
         raise DepCheckFailError()
@@ -529,6 +530,8 @@ class Graph:
         # Sometimes it gets indefinitely stuck!
         continue
         # break
+        # return None, None
+      
 
       if not pr.goal:
         break

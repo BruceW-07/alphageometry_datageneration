@@ -98,7 +98,7 @@ class ClauseGenerator:
         Make a canonical clause for a given relation
         """
         pos_new_pts_idx = get_ordering_index(self.defs[clause_relation].construction.args,
-                                             self.defs[clause_relation].points + self.defs[clause_relation].args)
+                                            self.defs[clause_relation].points + self.defs[clause_relation].args)
         all_inp_pts = result_vars + arg_vars
         all_inp_pts_reordered = [all_inp_pts[pos_new_pts_idx[i]] for i, _ in enumerate(all_inp_pts)]
 
@@ -126,7 +126,8 @@ class ClauseGenerator:
                 clause_relation, defines_points, needs_defined_points = self.choose_suitable_clause()
                 sub_clause_relation.append(clause_relation)
                 # this_clause_must_define = max((0, defines_points - max([0, ] + sub_clause_defines_points)))
-                sub_clause_defines_points.append(random.choice(range(defines_points, defines_points + 1)))
+                # sub_clause_defines_points.append(random.choice(range(defines_points, defines_points + 1)))
+                sub_clause_defines_points.append(defines_points)
                 sub_clause_needs_defined_points.append(needs_defined_points)
 
             defines_points = random.randint(max(sub_clause_defines_points), sum(sub_clause_defines_points))
@@ -135,11 +136,11 @@ class ClauseGenerator:
             pts_defined_sp_far = 0
             for i in range(n):
                 pts_this_clause_defines = get_wrapped_points(all_will_be_defined_pts, pts_defined_sp_far,
-                                                             sub_clause_defines_points[i])
+                                                        sub_clause_defines_points[i])
                 pts_defined_sp_far += sub_clause_defines_points[i]
                 chosen_defined_pts = random.sample(self.defined_points, sub_clause_needs_defined_points[i])
                 clause = self.get_text_clause(sub_clause_relation[i], chosen_defined_pts, pts_this_clause_defines,
-                                              all_will_be_defined_pts, result_vars_in_eq=(i == 0))
+                                            all_will_be_defined_pts, result_vars_in_eq=(i == 0))
                 clauses.append(clause)
 
             self.add_newly_defined_pts(all_will_be_defined_pts)
@@ -154,7 +155,7 @@ class ClauseGenerator:
                 will_be_defined_pts = self.get_points_that_this_clause_defines(defines_points)
 
                 clause = self.get_text_clause(clause_relation, chosen_defined_pts, will_be_defined_pts,
-                                              all_will_be_defined_pts=will_be_defined_pts, result_vars_in_eq=True)
+                                            all_will_be_defined_pts=will_be_defined_pts, result_vars_in_eq=True)
                 clauses.append(clause)
                 self.add_newly_defined_pts(will_be_defined_pts)
 
