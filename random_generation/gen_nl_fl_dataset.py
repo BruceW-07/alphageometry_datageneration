@@ -94,7 +94,8 @@ def construct_problem_and_graph(fl_statement, definitions, set_timeout=True):
     return problem, graph
 
 def main(run_id, interactive, num_sol_depth):
-    dataset_length = 200
+    # dataset_length = 200
+    dataset_length = 100000000
     # filename = f'../../datasets/nl_fl_dataset_{run_id}.csv'
     # filename = (f'/is/cluster/fast/scratch/pghosh/dataset/alpha_geo/geometry/geometry_w_proof_mcq_depth{num_sol_depth}/'
     #             f'nl_fl_w_proof_dataset_{run_id}.csv')
