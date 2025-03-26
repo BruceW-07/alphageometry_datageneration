@@ -1,6 +1,6 @@
 #!/bin/bash
 export PYTHONPATH=$PYTHONPATH:../
-samples_per_run=10000
+samples_per_run=10
 
 # Check if the first argument is provided and is a numeric value
 if [[ -z "$1" || ! "$1" =~ ^[0-9]+$ ]]; then
@@ -13,8 +13,10 @@ fi
 seed_value=$(($1 * samples_per_run / 100))
 
 # Base path for the Python environment and output directory
-python_env="/home/pghosh/miniconda3/envs/alpha_geo/bin/python"
-output_base="/is/cluster/scratch/pghosh/dataset/alpha_geo/arithmetic"
+# python_env="/home/pghosh/miniconda3/envs/alpha_geo/bin/python"
+# output_base="/is/cluster/scratch/pghosh/dataset/alpha_geo/arithmetic"
+python_env="python"
+output_base="dataset/alpha_geo/arithmetic"
 
 # Run the Python script
 expr_depth=1

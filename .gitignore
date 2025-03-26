@@ -44,3 +44,4 @@ pyvenv.cfg
 random_generation/execution_time.log
 etc/
 final_dataset/
+dataset/
