@@ -93,7 +93,8 @@ def main():
         graph.type2nodes[gh.Point],
         graph.type2nodes[gh.Line],
         graph.type2nodes[gh.Circle],
-        graph.type2nodes[gh.Segment])
+        graph.type2nodes[gh.Segment],
+        save_to='output.png')
 
     svg_text = draw_svg(
         graph.type2nodes[gh.Point],
