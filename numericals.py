@@ -1247,8 +1247,9 @@ def draw(
 
   # plt.show(block=block)
   if save_to:
-    os.makedirs(os.path.dirname(save_to), exist_ok=True)
-  plt.savefig(fname = save_to, dpi=300)
+    if os.path.dirname(save_to):
+      os.makedirs(os.path.dirname(save_to), exist_ok=True)
+    plt.savefig(fname = save_to, dpi=300)
 
 def close_enough(a: float, b: float, tol: float = 1e-12) -> bool:
   return abs(a - b) < tol
