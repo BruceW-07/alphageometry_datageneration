@@ -89,6 +89,7 @@ def construct_problem_and_graph(fl_statement, definitions, set_timeout=True):
         return None, None
     except AttributeError as e:
         print(e)
+        print(f"{fl_statement}")
         # TODO(Partha, Max, Felix): This is a hack to avoid the AttributeError. We should fix this.
         return None, None
     except gh.DepCheckFailError:
@@ -126,7 +127,7 @@ def main(run_id, interactive, num_sol_depth):
         writer = csv.DictWriter(csvfile, fieldnames=field_names, quoting=csv.QUOTE_MINIMAL, quotechar='"')
         writer.writeheader()
         serial_num = run_id * dataset_length
-        cc_gen = CompoundClauseGen(definitions, max_comma_sep_clause=3, max_single_clause=7, max_sets=2, seed=run_id,
+        cc_gen = CompoundClauseGen(definitions, max_comma_sep_clause=2, max_single_clause=7, max_sets=2, seed=run_id,    # setting max_comma_sep_clause > 3 is meaningless
                                     shuffle_var_names=False)
         verbalizer = IndependentStatementVerbalization(None)
 

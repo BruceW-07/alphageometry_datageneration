@@ -1,7 +1,7 @@
 import copy
 import random
 import string
-from graph import INTERSECT
+from graph import INTERSECT, NO_SKETCH
 from reorder_lists import get_ordering_index
 
 
@@ -196,8 +196,11 @@ class CompoundClauseGen:
         self.max_sets = max_sets
         self.cg_comma_sep = ClauseGenerator(definitions, INTERSECT, is_comma_sep=True, seed=seed,
                                             shuffle_var_names=shuffle_var_names)
-        self.cg_single_clause = ClauseGenerator(definitions, list(definitions.keys()), is_comma_sep=False, seed=seed,
-                                                shuffle_var_names=shuffle_var_names)
+        constructions_excluding_sketch = [key for key in definitions.keys() if key not in NO_SKETCH]
+        self.cg_single_clause = ClauseGenerator(definitions, constructions_excluding_sketch, is_comma_sep=False, seed=seed,
+                            shuffle_var_names=shuffle_var_names)
+        # self.cg_single_clause = ClauseGenerator(definitions, list(definitions.keys()), is_comma_sep=False, seed=seed,
+        #                                         shuffle_var_names=shuffle_var_names)
 
     def get_varname_2_alpha_geo_var_map(self):
         return self.cg_single_clause.get_varname_2_alpha_geo_var_map()

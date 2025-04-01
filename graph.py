@@ -74,6 +74,11 @@ INTERSECT = [
     'eqangle3',
 ]
 
+# constructions with corresponding sketch functions
+NO_SKETCH = [
+  'on_aline2',
+  'cc_tangent0'
+]
 
 # pylint: disable=protected-access
 # pylint: disable=unused-argument
@@ -2572,6 +2577,11 @@ class Graph:
       verbose: int = False,
   ) -> tuple[list[Dependency], int]:
     """Add a new clause of construction, e.g. a new excenter."""
+    
+    print()
+    for construction in clause.constructions:
+      print(construction.name, construction.args)   
+
     existing_points = self.all_points()
     new_points = [Point(name) for name in clause.points]
 
@@ -2637,8 +2647,10 @@ class Graph:
     def draw_fn() -> list[nm.Point]:
       to_be_intersected = range_fn()
 
-      for construction in clause.constructions:
-        print(construction.name, construction.args)
+      print(f"len(to_be_intersected) = {len(to_be_intersected)}")
+
+      # for construction in clause.constructions:
+      #   print(construction.name, construction.args)
         
       return nm.reduce(to_be_intersected, existing_points)
 
@@ -2715,6 +2727,10 @@ class Graph:
       if is_total_free or is_semi_free:
         p.rely_on.add(p)
         p.base_rely_on.add(p)
+ 
+    print(len(new_points), len(nums), len(clause.nums))
+    for new_point, num, num0 in zip(new_points, nums, clause.nums):
+      print(new_point.name, new_point.num, num, num0)
 
     plevel_done = set()
     added = []
