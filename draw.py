@@ -10,7 +10,7 @@ import problem as pr
 
 # problem_file = "imo_ag_30.txt"
 # problem_file = "jgex_ag_231.txt"
-problem_file = "new_problem.txt"
+problem_file = "my_problem.txt"
 problems = pr.Problem.from_txt_file(
     problem_file, 
     to_dict=True, 

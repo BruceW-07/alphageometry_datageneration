@@ -77,12 +77,15 @@ def construct_problem_and_graph(fl_statement, definitions, set_timeout=True):
         return None, None
     except KeyError:
         print("Key error while building graph. Continuing ...")
+        print(f"{fl_statement}")
         return None, None
     except ValueError:
         print("Value error while building graph. Continuing ...")
+        print(f"{fl_statement}")
         return None, None
     except TypeError:
         print("Some in-compatible goal statement used. Will try another.")
+        print(f"{fl_statement}")
         return None, None
     except AttributeError as e:
         print(e)

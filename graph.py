@@ -522,8 +522,8 @@ class Graph:
         continue
         # return None, None
       except DepCheckFailError:
-        # continue
-        raise DepCheckFailError()
+        continue
+        # raise DepCheckFailError()
       except (PointTooCloseError, PointTooFarError):
         # break #todo: Partha: I think this is to make sure the problem drawing looks nice. So breaking is not bad. 
         # Max: should still continue adding other points, so "continue"
@@ -2636,6 +2636,10 @@ class Graph:
 
     def draw_fn() -> list[nm.Point]:
       to_be_intersected = range_fn()
+
+      for construction in clause.constructions:
+        print(construction.name, construction.args)
+        
       return nm.reduce(to_be_intersected, existing_points)
 
     rely_on = set()

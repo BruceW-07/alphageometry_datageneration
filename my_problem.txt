@@ -1,0 +1,4 @@
+2
+A B C D = eqdia_quadrangle A B C D; E = on_bline E A B; F = lc_tangent F A D; G = circumcenter G D F A; H I J = 3peq H I J C F B; K L M N = incenter2 K L M N F A I; O = angle_bisector O G L A, on_circle O I D, on_dia O M H
+1
+A B C = triangle12 A B C; D = parallelogram B C A D; E F G H = eq_quadrangle E F G H; I J K = ieq_triangle I J K; L = on_aline2 L G K C F E
