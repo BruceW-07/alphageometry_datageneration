@@ -101,7 +101,7 @@ def construct_problem_and_graph(fl_statement, definitions, set_timeout=True):
 
 def main(run_id, interactive, num_sol_depth):
     # dataset_length = 200
-    dataset_length = 100000000
+    dataset_length = 50000
     # filename = f'../../datasets/nl_fl_dataset_{run_id}.csv'
     # filename = (f'/is/cluster/fast/scratch/pghosh/dataset/alpha_geo/geometry/geometry_w_proof_mcq_depth{num_sol_depth}/'
     #             f'nl_fl_w_proof_dataset_{run_id}.csv')
@@ -122,14 +122,37 @@ def main(run_id, interactive, num_sol_depth):
 
     # Write data to the CSV file
     wrong_goal_generator = ConstraintGenerator(rules_path)
-    with (open(filename, 'w', newline='', encoding='utf-8') as csvfile):
-        # writer = csv.DictWriter(csvfile, fieldnames=field_names,)# delimiter='#')
-        # this is necessary for inspect to work
+    
+    # Check if file exists to continue writing
+    file_exists = os.path.isfile(filename)
+    start_serial_num = run_id * dataset_length
+    
+    # If file exists, read the last serial number to continue from there
+    if file_exists:
+        with open(filename, 'r', newline='', encoding='utf-8') as csvfile:
+            reader = csv.reader(csvfile)
+            rows = list(reader)
+            if len(rows) > 1:  # If there's data beyond the header
+                last_row = rows[-1]
+                if last_row and len(last_row) > 0:
+                    try:
+                        start_serial_num = run_id * dataset_length + int(last_row[0])  # Get the next serial number
+                    except (ValueError, IndexError):
+                        # If there's an issue parsing the last serial number, use the default
+                        start_serial_num = run_id * dataset_length
+    
+    # Open file in append mode if it exists, otherwise in write mode
+    mode = 'a' if file_exists else 'w'
+    with open(filename, mode, newline='', encoding='utf-8') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=field_names, quoting=csv.QUOTE_MINIMAL, quotechar='"')
-        writer.writeheader()
-        serial_num = run_id * dataset_length
+        
+        # Write header only if creating a new file
+        if not file_exists:
+            writer.writeheader()
+            
+        serial_num = start_serial_num
         cc_gen = CompoundClauseGen(definitions, max_comma_sep_clause=2, max_single_clause=7, max_sets=2, seed=run_id,    # setting max_comma_sep_clause > 3 is meaningless
-                                    shuffle_var_names=False)
+                                  shuffle_var_names=False)
         verbalizer = IndependentStatementVerbalization(None)
 
         # for i in range(dataset_length):
@@ -257,7 +280,7 @@ if __name__ == "__main__":
                         help='Howmany steps will the DDAR search through.')
     args = parser.parse_args()
 
-    n_processes = 1
+    n_processes = 16
     offset = 0 * n_processes
 
     if args.interactive:
