@@ -2578,9 +2578,9 @@ class Graph:
   ) -> tuple[list[Dependency], int]:
     """Add a new clause of construction, e.g. a new excenter."""
     
-    print()
-    for construction in clause.constructions:
-      print(construction.name, construction.args)   
+    # print()
+    # for construction in clause.constructions:
+    #   print(construction.name, construction.args)   
 
     existing_points = self.all_points()
     new_points = [Point(name) for name in clause.points]
@@ -2647,7 +2647,7 @@ class Graph:
     def draw_fn() -> list[nm.Point]:
       to_be_intersected = range_fn()
 
-      print(f"len(to_be_intersected) = {len(to_be_intersected)}")
+      # print(f"len(to_be_intersected) = {len(to_be_intersected)}")
 
       # for construction in clause.constructions:
       #   print(construction.name, construction.args)
@@ -2728,9 +2728,9 @@ class Graph:
         p.rely_on.add(p)
         p.base_rely_on.add(p)
  
-    print(len(new_points), len(nums), len(clause.nums))
-    for new_point, num, num0 in zip(new_points, nums, clause.nums):
-      print(new_point.name, new_point.num, num, num0)
+    # print(len(new_points), len(nums), len(clause.nums))
+    # for new_point, num, num0 in zip(new_points, nums, clause.nums):
+    #   print(new_point.name, new_point.num, num, num0)
 
     plevel_done = set()
     added = []

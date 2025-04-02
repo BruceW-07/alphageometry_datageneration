@@ -222,6 +222,8 @@ def main(run_id, interactive, num_sol_depth):
                 writer.writerow(row)
                 serial_num += 1
 
+                print(f'Written {serial_num} rows to {filename}')
+
 
 def get_wrong_goal_nl_fl(capitalized_pt_names, wrong_goal_generator):
     wrong_goal = wrong_goal_generator.generate_constraint(capitalized_pt_names)

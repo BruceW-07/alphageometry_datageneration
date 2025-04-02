@@ -130,7 +130,9 @@ class ClauseGenerator:
                 sub_clause_defines_points.append(defines_points)
                 sub_clause_needs_defined_points.append(needs_defined_points)
 
-            defines_points = random.randint(max(sub_clause_defines_points), sum(sub_clause_defines_points))
+            assert max(sub_clause_defines_points) == 1
+            # defines_points = random.randint(max(sub_clause_defines_points), sum(sub_clause_defines_points))
+            defines_points = 1
             all_will_be_defined_pts = self.get_points_that_this_clause_defines(defines_points)
 
             pts_defined_sp_far = 0
