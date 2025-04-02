@@ -1,4 +1,6 @@
-2
-A B = segment A B; C D E F = rectangle C D E F; G H = tangent G H D E A; I J K = r_triangle I J K; L M = eqdistance L G C J, s_angle D A M 15
+3
+A B C D = r_trapezoid A B C D; E F G = iso_triangle E F G; H = mirror H A C; I J K L = quadrangle I J K L; M N O P = r_trapezoid M N O P; Q R S T = eq_quadrangle Q R S T ? para P O M P
 1
-A B C = triangle12 A B C; D = parallelogram B C A D; E F G H = eq_quadrangle E F G H; I J K = ieq_triangle I J K; L = on_aline2 L G K C F E
+A B C = triangle12 A B C; D E F G = eq_trapezoid D E F G; H = on_line H E D; I J K L = trapezoid I J K L; M N O P Q = pentagon M N O P Q; R = on_opline R L G; S T = tangent S T E J R; U = on_aline U D C K P T ? simtri2 T T R S E S
+2
+A B C D E = pentagon A B C D E; F G H I = trapezoid F G H I; J K L = r_triangle J K L; M N O P Q = pentagon M N O P Q; R S T = triangle12 R S T; U = on_line U K D, on_bline U P D; V = on_bline V E F, s_angle U S V 90 ? eqratio T R R S T S S T

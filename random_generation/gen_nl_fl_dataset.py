@@ -74,6 +74,7 @@ def construct_problem_and_graph(fl_statement, definitions, set_timeout=True):
             signal.alarm(0)
     except TimeoutException as e:
         print("Graph couldn't be created in reasonable time. Perhaps problem with the premises. Continuing ...")
+        # print(f"{fl_statement}")
         return None, None
     except KeyError:
         print("Key error while building graph. Continuing ...")
@@ -256,7 +257,7 @@ if __name__ == "__main__":
                         help='Howmany steps will the DDAR search through.')
     args = parser.parse_args()
 
-    n_processes = 16
+    n_processes = 1
     offset = 0 * n_processes
 
     if args.interactive:
