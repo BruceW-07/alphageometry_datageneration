@@ -1,3 +1,5 @@
+0
+A B C D = eqdia_quadrangle A B C D; E F G = iso_triangle E F G; H = on_circle H B F; I = foot I E A F; J = on_tline J G I C ? cyclic E F E F
 3
 A B C D = r_trapezoid A B C D; E F G = iso_triangle E F G; H = mirror H A C; I J K L = quadrangle I J K L; M N O P = r_trapezoid M N O P; Q R S T = eq_quadrangle Q R S T ? para P O M P
 1
