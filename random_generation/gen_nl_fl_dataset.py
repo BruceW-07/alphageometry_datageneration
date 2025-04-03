@@ -269,6 +269,18 @@ def str_to_bool(value):
         raise argparse.ArgumentTypeError('Boolean value expected.')
 
 
+def process_with_monitoring(run_id, interactive, num_sol_depth, max_retries=100):
+    """执行主任务并在失败时自动重试"""
+    for attempt in range(max_retries):
+        try:
+            main(run_id, interactive, num_sol_depth)
+            return  # 成功完成则退出函数
+        except Exception as e:
+            print(f"进程 {run_id} 失败: {e}. 尝试 {attempt+1}/{max_retries}")
+            if attempt == max_retries - 1:
+                print(f"进程 {run_id} 达到最大重试次数，放弃执行。")
+
+
 if __name__ == "__main__":
     import argparse
 
@@ -278,6 +290,8 @@ if __name__ == "__main__":
                         help='A boolean value (true/false)')
     parser.add_argument('--num_sol_depth', required=True, type=int,
                         help='Howmany steps will the DDAR search through.')
+    parser.add_argument('--max_retries', type=int, default=100,
+                        help='失败进程的最大重试次数')
     args = parser.parse_args()
 
     n_processes = 100
@@ -287,6 +301,7 @@ if __name__ == "__main__":
         main(args.run_id, args.interactive, args.num_sol_depth)
     else:
         with multiprocessing.Pool(n_processes) as pool:
-            pool.starmap(main, [(offset + args.run_id * n_processes + i, args.interactive, args.num_sol_depth)
-                                for i in range(n_processes)])
+            pool.starmap(process_with_monitoring, 
+                        [(offset + args.run_id * n_processes + i, args.interactive, args.num_sol_depth, args.max_retries)
+                          for i in range(n_processes)])
 
