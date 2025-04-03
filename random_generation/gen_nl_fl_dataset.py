@@ -156,7 +156,7 @@ def main(run_id, interactive, num_sol_depth):
         verbalizer = IndependentStatementVerbalization(None)
 
         # for i in range(dataset_length):
-        while serial_num < (run_id + 1) * dataset_length:
+        while (serial_num - start_serial_num) < dataset_length:
             fl_statement = cc_gen.generate_clauses()
             num_clauses = 0
             for clause in fl_statement.split(';'):
@@ -294,7 +294,7 @@ if __name__ == "__main__":
                         help='失败进程的最大重试次数')
     args = parser.parse_args()
 
-    n_processes = 100
+    n_processes = 16
     offset = 0 * n_processes
 
     if args.interactive:
