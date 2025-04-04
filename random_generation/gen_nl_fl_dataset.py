@@ -21,6 +21,7 @@ from generate_random_proofs import convert_var_names_from_alpha_geo_names
 from parse_constrains.get_rand_constrain import ConstraintGenerator
 
 import csv
+import time
 
 def is_valid_goal(fl_statement, goal_fl, rules, definitions, set_timeout=True):
     if fl_statement.find('?') < 0:
@@ -109,7 +110,8 @@ def main(run_id, interactive, num_sol_depth):
                 f'nl_fl_w_proof_dataset_{run_id}.csv')
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     # filename = '../data/nl_fl_dataset_2.csv'
-    random.seed(run_id)
+    current_seed = run_id + int(time.time())
+    random.seed(current_seed)
     defs_path = '../defs.txt'
     rules_path = '../rules.txt'
 
@@ -151,7 +153,7 @@ def main(run_id, interactive, num_sol_depth):
             writer.writeheader()
             
         serial_num = start_serial_num
-        cc_gen = CompoundClauseGen(definitions, max_comma_sep_clause=2, max_single_clause=7, max_sets=2, seed=run_id,    # setting max_comma_sep_clause > 3 is meaningless
+        cc_gen = CompoundClauseGen(definitions, max_comma_sep_clause=2, max_single_clause=7, max_sets=2, seed=current_seed,    # setting max_comma_sep_clause > 3 is meaningless
                                   shuffle_var_names=False)
         verbalizer = IndependentStatementVerbalization(None)
 

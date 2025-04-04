@@ -6,7 +6,8 @@ import argparse
 def extract_fl_nl_pairs(input_dir, output_file):
     """
     从指定目录下的所有CSV文件中提取fl_statement和nl_statement，
-    并以<fl>...\n<nl>....\n\n的格式写入到输出文件中
+    并以<fl>...\n<nl>....\n\n的格式写入到输出文件中，
+    同时进行去重处理
     """
     # 确保输入目录路径以斜杠结尾
     if not input_dir.endswith('/'):
@@ -19,8 +20,13 @@ def extract_fl_nl_pairs(input_dir, output_file):
         print(f"警告：在 {input_dir} 中没有找到CSV文件")
         return
     
-    # 记录处理的行数
+    # 记录处理的行数和去重后的行数
     total_rows = 0
+    unique_rows = 0
+    duplicate_rows = 0
+    
+    # 用于去重的集合
+    unique_pairs = set()
     
     try:
         # 打开输出文件
@@ -38,15 +44,27 @@ def extract_fl_nl_pairs(input_dir, output_file):
                             fl_statement = row.get('fl_statement', '')
                             nl_statement = row.get('nl_statement', '')
                             
-                            # 写入输出文件
-                            outf.write(f"<fl>{fl_statement}\n<nl>{nl_statement}\n\n")
+                            # 构造唯一键用于去重
+                            pair_key = (fl_statement, nl_statement)
+                            
+                            # 检查是否为重复项
+                            if pair_key not in unique_pairs:
+                                # 写入输出文件
+                                outf.write(f"<fl>{fl_statement}\n<nl>{nl_statement}\n\n")
+                                unique_pairs.add(pair_key)
+                                unique_rows += 1
+                            else:
+                                duplicate_rows += 1
+                            
                             total_rows += 1
                             
                 except Exception as e:
                     print(f"处理文件 {csv_file} 时出错: {str(e)}")
                     continue
         
-        print(f"处理完成，共提取了 {total_rows} 对fl-nl对")
+        print(f"处理完成，共读取了 {total_rows} 对fl-nl对")
+        print(f"去重后保留了 {unique_rows} 对唯一的fl-nl对")
+        print(f"发现并移除了 {duplicate_rows} 对重复的fl-nl对")
         
     except Exception as e:
         print(f"写入输出文件 {output_file} 时出错: {str(e)}")
