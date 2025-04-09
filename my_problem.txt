@@ -1,3 +1,7 @@
+examples/complete2/009/complete_016_7_Book_00EE_06_E051-32.gex
+a b c = triangle a b c; d = eq_triangle d a b; e = eq_triangle e a c; f = eq_triangle f c b ? para e d c f
+examples/complete2/013/complete_002_6_GDD_FULL_41-60_56.gex
+m a b = iso_triangle m a b; o = circle o a b m; d = on_line d m o, on_line d a b; e = on_tline e a a o, on_pline e m a o ? cong m e m d
 0
 A B C D = eqdia_quadrangle A B C D; E F G = iso_triangle E F G; H = on_circle H B F; I = foot I E A F; J = on_tline J G I C ? cyclic E F E F
 3
