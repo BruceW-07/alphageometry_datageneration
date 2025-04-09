@@ -99,9 +99,9 @@ def construct_problem_and_graph(fl_statement, definitions, set_timeout=True):
 
     return problem, graph
 
-def main(run_id, interactive, num_sol_depth):
-    # dataset_length = 200
-    dataset_length = 100000000
+def main(run_id, verbose, num_sol_depth):
+    dataset_length = 200
+    # dataset_length = 100000000
     # filename = f'../../datasets/nl_fl_dataset_{run_id}.csv'
     # filename = (f'/is/cluster/fast/scratch/pghosh/dataset/alpha_geo/geometry/geometry_w_proof_mcq_depth{num_sol_depth}/'
     #             f'nl_fl_w_proof_dataset_{run_id}.csv')
@@ -117,8 +117,14 @@ def main(run_id, interactive, num_sol_depth):
     definitions, rules = load_definitions_and_rules(defs_path, rules_path)
 
     # field_names = ['sl_n', 'num_clauses', 'nl_statement', 'fl_statement', 'goal_nl', 'goal_fl', 'rnd_states']
-    field_names = ['sl_n', 'num_clauses', 'nl_statement', 'fl_statement', 'nl_solution', 'fl_solution','w_goal_nl_1',
-                    'w_goal_fl_1', 'w_goal_nl_2', 'w_goal_fl_2', 'w_goal_nl_3', 'w_goal_fl_3']
+    field_names = [
+        'sl_n', 
+        'num_clauses', 'nl_statement', 'fl_statement', 
+        'nl_solution', 'fl_solution',
+        'w_goal_nl_1', 'w_goal_fl_1', 
+        'w_goal_nl_2', 'w_goal_fl_2', 
+        'w_goal_nl_3', 'w_goal_fl_3'
+        ]
 
     # Write data to the CSV file
     wrong_goal_generator = ConstraintGenerator(rules_path)
@@ -128,8 +134,13 @@ def main(run_id, interactive, num_sol_depth):
         writer = csv.DictWriter(csvfile, fieldnames=field_names, quoting=csv.QUOTE_MINIMAL, quotechar='"')
         writer.writeheader()
         serial_num = run_id * dataset_length
-        cc_gen = CompoundClauseGen(definitions, max_comma_sep_clause=2, max_single_clause=7, max_sets=2, seed=run_id,    # setting max_comma_sep_clause > 3 is meaningless
-                                    shuffle_var_names=False)
+        cc_gen = CompoundClauseGen(
+            definitions, 
+            max_comma_sep_clause=2, # setting max_comma_sep_clause > 3 is meaningless
+            max_single_clause=7, 
+            max_sets=2, 
+            seed=run_id,    
+            shuffle_var_names=False)
         verbalizer = IndependentStatementVerbalization(None)
 
         # for i in range(dataset_length):
@@ -141,13 +152,13 @@ def main(run_id, interactive, num_sol_depth):
             if num_clauses < 5:
                 continue
 
-            if interactive: print(fl_statement)
+            if verbose: print(fl_statement)
 
             problem, graph = construct_problem_and_graph(fl_statement, definitions)
             if problem is None or graph is None:
                 continue
 
-            if interactive: print(f'Solving ...')
+            if verbose: print(f'Solving ...')
 
             try:
                 ddar.solve(graph, rules, problem, max_level=num_sol_depth)
@@ -194,7 +205,7 @@ def main(run_id, interactive, num_sol_depth):
                         w_goal_nl_temp, w_goal_fl_temp = \
                         get_wrong_goal_nl_fl(capitalized_pt_names, wrong_goal_generator)
                         # we are looking for wrong goals!
-                        if interactive: print(f'Validating \n {fl_statement}\nwith goal\n{w_goal_fl_temp}')
+                        if verbose: print(f'Validating \n {fl_statement}\nwith goal\n{w_goal_fl_temp}')
                         if not is_valid_goal(fl_statement, w_goal_fl_temp, rules, definitions):
                             w_goals_nl[valid_goal_count] = w_goal_nl_temp
                             w_goals_fl[valid_goal_count] = w_goal_fl_temp
@@ -251,7 +262,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Create problem fl - nl dataset')
     parser.add_argument('--run_id', required=True, type=int, help='An integer positional argument')
-    parser.add_argument('--interactive', required=True, type=str_to_bool,
+    parser.add_argument('--verbose', required=True, type=str_to_bool,
                         help='A boolean value (true/false)')
     parser.add_argument('--num_sol_depth', required=True, type=int,
                         help='Howmany steps will the DDAR search through.')
@@ -260,10 +271,10 @@ if __name__ == "__main__":
     n_processes = 1
     offset = 0 * n_processes
 
-    if args.interactive:
-        main(args.run_id, args.interactive, args.num_sol_depth)
+    if args.verbose:
+        main(args.run_id, args.verbose, args.num_sol_depth)
     else:
         with multiprocessing.Pool(n_processes) as pool:
-            pool.starmap(main, [(offset + args.run_id * n_processes + i, args.interactive, args.num_sol_depth)
+            pool.starmap(main, [(offset + args.run_id * n_processes + i, args.verbose, args.num_sol_depth)
                                 for i in range(n_processes)])
 
