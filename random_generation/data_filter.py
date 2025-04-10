@@ -32,6 +32,10 @@ def process_csv_files(source_dir, target_dir, target_dir_with_aux):
     # Process all CSV files in the current directory
     for file in csv_files:
       source_file = os.path.join(root, file)
+      # Skip empty files
+      if os.path.getsize(source_file) == 0:
+        print(f"Skipping empty file: {source_file}")
+        continue
       df = pd.read_csv(source_file)
       
       # Count original items
