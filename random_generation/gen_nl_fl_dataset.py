@@ -4,6 +4,8 @@ import sys
 sys.path.append('..')
 import argparse
 import random
+import csv
+
 import ddar
 import graph as gh
 import numericals as nm
@@ -21,39 +23,6 @@ from alphageometry import write_solution
 from generate_random_proofs import convert_var_names_from_alpha_geo_names
 from parse_constrains.get_rand_constrain import ConstraintGenerator
 
-import csv
-
-# def is_valid_goal(fl_statement, goal_fl, rules, definitions, set_timeout=True):
-#     if fl_statement.find('?') < 0:
-#         premise = fl_statement
-#     else:
-#         premise, _ = fl_statement.split('?')
-
-#     # try:
-#     wrong_formal_prob_w_goal = premise.strip() + ' ? ' + goal_fl
-#     # wrong_formal_prob_w_goal = 'a b c d = r_trapezoid a b c d ? cyclic a b c d'
-#     problem, graph = construct_problem_and_graph(wrong_formal_prob_w_goal, definitions)
-#     # except:
-#     #     try:
-#     #         import time
-#     #         time.sleep(5)
-#     #     except TimeoutException:
-#     #         import ipdb; ipdb.set_trace()
-#     #         problem, graph = construct_problem_and_graph(wrong_formal_prob_w_goal, definitions, set_timeout=False)
-#     if problem is None or graph is None:
-#         return False
-#     else:
-#         try:
-#             if set_timeout:
-#                 signal.alarm(20)
-#             g, level_times, status, branches, all_added = ddar.solve(graph, rules, problem, max_level=8)
-#             # Disable the alarm
-#             if set_timeout:
-#                 signal.alarm(0)
-#         except TimeoutException as e:
-#             # Returning invalid solution if it could not be solved in 30 sec. so the goal is accepted as wrong goals
-#             return False
-#     return status == 'solved'
 
 def construct_problem_and_graph(fl_statement, definitions, set_timeout=True):
     try:
@@ -100,7 +69,7 @@ def construct_problem_and_graph(fl_statement, definitions, set_timeout=True):
     return problem, graph
 
 def main(run_id, verbose, num_sol_depth):
-    dataset_length = 5
+    dataset_length = 10
     # dataset_length = 100000000
     # filename = f'../../datasets/nl_fl_dataset_{run_id}.csv'
     # filename = (f'/is/cluster/fast/scratch/pghosh/dataset/alpha_geo/geometry/geometry_w_proof_mcq_depth{num_sol_depth}/'
@@ -173,7 +142,7 @@ def main(run_id, verbose, num_sol_depth):
                 goal_fl = list(random.choice(possible_goals)) 
 
                 # get proof
-                fl_proof, nl_proof= write_solution(
+                fl_solution, nl_solution= write_solution(
                     graph, 
                     problem, 
                     goal=pr.Construction(goal_fl[0], list(goal_fl[1:])), 
@@ -195,8 +164,8 @@ def main(run_id, verbose, num_sol_depth):
                     'num_clauses': num_clauses,
                     'nl_statement': nl_prob + goal_nl,
                     'fl_statement': fl_statement + goal_fl,
-                    'nl_solution': nl_proof,
-                    'fl_solution': fl_proof,
+                    'nl_solution': nl_solution,
+                    'fl_solution': fl_solution,
                 })
                 serial_num += 1
 
