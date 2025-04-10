@@ -23,38 +23,37 @@ from parse_constrains.get_rand_constrain import ConstraintGenerator
 
 import csv
 
-def is_valid_goal(fl_statement, goal_fl, rules, definitions, set_timeout=True):
-    if fl_statement.find('?') < 0:
-        premise = fl_statement
-    else:
-        premise, _ = fl_statement.split('?')
+# def is_valid_goal(fl_statement, goal_fl, rules, definitions, set_timeout=True):
+#     if fl_statement.find('?') < 0:
+#         premise = fl_statement
+#     else:
+#         premise, _ = fl_statement.split('?')
 
-    # try:
-    wrong_formal_prob_w_goal = premise.strip() + ' ? ' + goal_fl
-    # wrong_formal_prob_w_goal = 'a b c d = r_trapezoid a b c d ? cyclic a b c d'
-    problem, graph = construct_problem_and_graph(wrong_formal_prob_w_goal, definitions)
-    # except:
-    #     try:
-    #         import time
-    #         time.sleep(5)
-    #     except TimeoutException:
-    #         import ipdb; ipdb.set_trace()
-    #         problem, graph = construct_problem_and_graph(wrong_formal_prob_w_goal, definitions, set_timeout=False)
-    if problem is None or graph is None:
-        return False
-    else:
-        try:
-            if set_timeout:
-                signal.alarm(20)
-            g, level_times, status, branches, all_added = ddar.solve(graph, rules, problem, max_level=8)
-            # Disable the alarm
-            if set_timeout:
-                signal.alarm(0)
-        except TimeoutException as e:
-            # Returning invalid solution if it could not be solved in 30 sec. so the goal is accepted as wrong goals
-            return False
-    return status == 'solved'
-
+#     # try:
+#     wrong_formal_prob_w_goal = premise.strip() + ' ? ' + goal_fl
+#     # wrong_formal_prob_w_goal = 'a b c d = r_trapezoid a b c d ? cyclic a b c d'
+#     problem, graph = construct_problem_and_graph(wrong_formal_prob_w_goal, definitions)
+#     # except:
+#     #     try:
+#     #         import time
+#     #         time.sleep(5)
+#     #     except TimeoutException:
+#     #         import ipdb; ipdb.set_trace()
+#     #         problem, graph = construct_problem_and_graph(wrong_formal_prob_w_goal, definitions, set_timeout=False)
+#     if problem is None or graph is None:
+#         return False
+#     else:
+#         try:
+#             if set_timeout:
+#                 signal.alarm(20)
+#             g, level_times, status, branches, all_added = ddar.solve(graph, rules, problem, max_level=8)
+#             # Disable the alarm
+#             if set_timeout:
+#                 signal.alarm(0)
+#         except TimeoutException as e:
+#             # Returning invalid solution if it could not be solved in 30 sec. so the goal is accepted as wrong goals
+#             return False
+#     return status == 'solved'
 
 def construct_problem_and_graph(fl_statement, definitions, set_timeout=True):
     try:
@@ -101,7 +100,7 @@ def construct_problem_and_graph(fl_statement, definitions, set_timeout=True):
     return problem, graph
 
 def main(run_id, verbose, num_sol_depth):
-    dataset_length = 20
+    dataset_length = 5
     # dataset_length = 100000000
     # filename = f'../../datasets/nl_fl_dataset_{run_id}.csv'
     # filename = (f'/is/cluster/fast/scratch/pghosh/dataset/alpha_geo/geometry/geometry_w_proof_mcq_depth{num_sol_depth}/'
@@ -123,13 +122,9 @@ def main(run_id, verbose, num_sol_depth):
         'num_clauses', 
         'nl_statement', 'fl_statement', 
         'nl_solution', 'fl_solution',
-        'w_goal_nl_1', 'w_goal_fl_1', 
-        'w_goal_nl_2', 'w_goal_fl_2', 
-        'w_goal_nl_3', 'w_goal_fl_3'
         ]
 
     # Write data to the CSV file
-    wrong_goal_generator = ConstraintGenerator(rules_path)
     with (open(filename, 'w', newline='', encoding='utf-8') as csvfile):
         # writer = csv.DictWriter(csvfile, fieldnames=field_names,)# delimiter='#')
         # this is necessary for inspect to work
@@ -175,90 +170,47 @@ def main(run_id, verbose, num_sol_depth):
             # Randomly select a cache node to be the goal. #TODO: Is this right can we do better? Consider coverage!
             possible_goals = list(graph.cache.keys())
             if len(possible_goals) > 0:
-                goal_fl = list(random.choice(possible_goals))  # comment this line
-                # goal_fl = random.choice(possible_goals + [''])  # uncomment this line to get goal less problems
-                if goal_fl == '':
-                    goal_nl = ''
-                    continue
-                else:
-                    # get proof
-                    goal = pr.Construction(goal_fl[0], list(goal_fl[1:]))
-                    fl_soln, nl_soln= write_solution(graph, problem, goal=goal, out_file='')
+                goal_fl = list(random.choice(possible_goals)) 
 
-                    capitalized_pt_names = [point_name.capitalize() for point_name in goal_fl[1:]]
-                    goal_fl[1:] = capitalized_pt_names
-                    # var_map = cc_gen.get_varname_2_alpha_geo_var_map()
-                    #only needed when variable names are scrambled. But then should be passed into the proof too
-                    # goal_fl = convert_var_names_from_alpha_geo_names(var_map, goal_fl)
-                    pretty_goal = pretty_nl(goal_fl[0], goal_fl[1:])
-                    if pretty_goal is None:
-                        raise ValueError(f'Could not pretty print goal: {goal_fl}')
-                    goal_nl = ' Prove that ' + translate_step(pretty_goal)
-                    goal_fl = ' ? ' + ' '.join(goal_fl)
+                # get proof
+                fl_proof, nl_proof= write_solution(
+                    graph, 
+                    problem, 
+                    goal=pr.Construction(goal_fl[0], list(goal_fl[1:])), 
+                    out_file=''
+                    )
 
-                    # generate wrong goals
-                    # Initialize lists to store wrong goals
-                    w_goals_nl = ['None', 'None', 'None']
-                    w_goals_fl = ['None', 'None', 'None']
-
-                    # Generate 3 different wrong goals
-                    valid_goal_count = 0
-                    for _ in range(10):
-                        w_goal_nl_temp, w_goal_fl_temp = \
-                        get_wrong_goal_nl_fl(capitalized_pt_names, wrong_goal_generator)
-                        # we are looking for wrong goals!
-                        if verbose: print(f'Validating \n {fl_statement}\nwith goal\n{w_goal_fl_temp}')
-                        if not is_valid_goal(fl_statement, w_goal_fl_temp, rules, definitions):
-                            w_goals_nl[valid_goal_count] = w_goal_nl_temp
-                            w_goals_fl[valid_goal_count] = w_goal_fl_temp
-                            valid_goal_count += 1
-                            if valid_goal_count == 3:
-                                print("break")
-                                break
-
-                # Now we know that the generated premises are not contradictory
+                goal_fl[1:] = [point_name.capitalize() for point_name in goal_fl[1:]]
+                # var_map = cc_gen.get_varname_2_alpha_geo_var_map()
+                #only needed when variable names are scrambled. But then should be passed into the proof too
+                # goal_fl = convert_var_names_from_alpha_geo_names(var_map, goal_fl)
+                pretty_goal = pretty_nl(goal_fl[0], goal_fl[1:])
+                goal_nl = ' Prove that ' + translate_step(pretty_goal)
+                goal_fl = ' ? ' + ' '.join(goal_fl)
                 # nl_prob = get_nl_problem_statement(fl_statement)
                 nl_prob = verbalizer.problem_fl_2_nl(fl_statement)
-                # dump this row
-                row = {
+
+                writer.writerow({
                     'sl_n': serial_num,
                     'num_clauses': num_clauses,
                     'nl_statement': nl_prob + goal_nl,
                     'fl_statement': fl_statement + goal_fl,
-                    'nl_solution': nl_soln,
-                    'fl_solution': fl_soln,
-                    'w_goal_nl_1': w_goals_nl[0],
-                    'w_goal_fl_1': w_goals_fl[0],
-                    'w_goal_nl_2': w_goals_nl[1],
-                    'w_goal_fl_2': w_goals_fl[1],
-                    'w_goal_nl_3': w_goals_nl[2],
-                    'w_goal_fl_3': w_goals_fl[2],
-                }
-                writer.writerow(row)
+                    'nl_solution': nl_proof,
+                    'fl_solution': fl_proof,
+                })
                 serial_num += 1
 
                 print(f'Written {serial_num} rows to {filename}')
 
-
-def get_wrong_goal_nl_fl(capitalized_pt_names, wrong_goal_generator):
-    wrong_goal = wrong_goal_generator.generate_constraint(capitalized_pt_names)
-    wrong_goals_list = wrong_goal.split(' ')
-    pretty_wrong_goal = pretty_nl(wrong_goals_list[0], wrong_goals_list[1:])
-    if pretty_wrong_goal is None:
-        raise ValueError(f'Could not pretty print wrong goal: {wrong_goal}')
-    wrong_goal_nl = ' Prove that ' + translate_step(pretty_wrong_goal)
-
-    return wrong_goal_nl, wrong_goal
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Create problem fl - nl dataset')
     parser.add_argument('--run_id', required=True, type=int)
-    parser.add_argument('--verbose', action='store_false')
+    parser.add_argument('--verbose', action='store_true')
     parser.add_argument('--num_sol_depth', required=True, type=int,
                         help='How many steps will the DDAR search through.')
     parser.add_argument('--n_threads', required=False, type=int, default=1)
     args = parser.parse_args()
-
+    
     if args.verbose:
         main(args.run_id, args.verbose, args.num_sol_depth)
     else:
