@@ -47,3 +47,4 @@ final_dataset/
 dataset/
 random_generation/fl_nl_pairs.txt
 my_problem.txt
+.vscode
