@@ -2,6 +2,7 @@ import multiprocessing
 import os
 import sys
 sys.path.append('..')
+import argparse
 import random
 import ddar
 import graph as gh
@@ -100,7 +101,7 @@ def construct_problem_and_graph(fl_statement, definitions, set_timeout=True):
     return problem, graph
 
 def main(run_id, verbose, num_sol_depth):
-    dataset_length = 200
+    dataset_length = 20
     # dataset_length = 100000000
     # filename = f'../../datasets/nl_fl_dataset_{run_id}.csv'
     # filename = (f'/is/cluster/fast/scratch/pghosh/dataset/alpha_geo/geometry/geometry_w_proof_mcq_depth{num_sol_depth}/'
@@ -119,7 +120,8 @@ def main(run_id, verbose, num_sol_depth):
     # field_names = ['sl_n', 'num_clauses', 'nl_statement', 'fl_statement', 'goal_nl', 'goal_fl', 'rnd_states']
     field_names = [
         'sl_n', 
-        'num_clauses', 'nl_statement', 'fl_statement', 
+        'num_clauses', 
+        'nl_statement', 'fl_statement', 
         'nl_solution', 'fl_solution',
         'w_goal_nl_1', 'w_goal_fl_1', 
         'w_goal_nl_2', 'w_goal_fl_2', 
@@ -211,6 +213,7 @@ def main(run_id, verbose, num_sol_depth):
                             w_goals_fl[valid_goal_count] = w_goal_fl_temp
                             valid_goal_count += 1
                             if valid_goal_count == 3:
+                                print("break")
                                 break
 
                 # Now we know that the generated premises are not contradictory
@@ -247,34 +250,18 @@ def get_wrong_goal_nl_fl(capitalized_pt_names, wrong_goal_generator):
 
     return wrong_goal_nl, wrong_goal
 
-
-def str_to_bool(value):
-    if value.lower() in ['true', 't', 'yes', '1']:
-        return True
-    elif value.lower() in ['false', 'f', 'no', '0', 'flase']:  # Including common typo
-        return False
-    else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
-
-
 if __name__ == "__main__":
-    import argparse
-
     parser = argparse.ArgumentParser(description='Create problem fl - nl dataset')
-    parser.add_argument('--run_id', required=True, type=int, help='An integer positional argument')
-    parser.add_argument('--verbose', required=True, type=str_to_bool,
-                        help='A boolean value (true/false)')
+    parser.add_argument('--run_id', required=True, type=int)
+    parser.add_argument('--verbose', action='store_false')
     parser.add_argument('--num_sol_depth', required=True, type=int,
-                        help='Howmany steps will the DDAR search through.')
+                        help='How many steps will the DDAR search through.')
+    parser.add_argument('--n_threads', required=False, type=int, default=1)
     args = parser.parse_args()
-
-    n_processes = 1
-    offset = 0 * n_processes
 
     if args.verbose:
         main(args.run_id, args.verbose, args.num_sol_depth)
     else:
-        with multiprocessing.Pool(n_processes) as pool:
-            pool.starmap(main, [(offset + args.run_id * n_processes + i, args.verbose, args.num_sol_depth)
-                                for i in range(n_processes)])
-
+        with multiprocessing.Pool(args.n_threads) as pool:
+            pool.starmap(main, [(args.run_id * args.n_threads + i, args.verbose, args.num_sol_depth)
+                                for i in range(args.n_threads)])
