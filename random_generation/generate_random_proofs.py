@@ -49,8 +49,10 @@ def main():
     cc_gen = CompoundClauseGen(definitions, 2, 3, 2, 42,
                                shuffle_var_names=False)
     txt = cc_gen.generate_clauses()
+    # txt = "A B C = r_triangle A B C; D E = trisegment D E C A; F = nsquare F B E; G = free G; H = on_circle H A F; I = eqdistance I B G A; J K = trisect J K A E B; L = on_bline L E B; M = intersection_lp M K E L H F; N = eqangle3 N H B A E G; O P Q R = rectangle O P Q R; S = on_aline S D I G J P ? cong C D D E"
+    txt = "A B C = triangle12 A B C; D E F G = eq_trapezoid D E F G; H = on_line H E D; I J K L = trapezoid I J K L; M N O P Q = pentagon M N O P Q; R = on_opline R L G; S T = tangent S T E J R; U = on_aline U D C K P T ? eqangle E S S T R S R T"
     # txt = 'a b c d = rectangle a b c d; e = on_line e a c, on_line e b d'
-    txt = ('A B C = triangle A B C; D = on_circum D C A B; E = on_circum E A C B; F = on_line F A C; G = on_line G A B, angle_bisector G B C A; Q = on_line Q E A; S = on_line S A B; Y = on_line Y E Q; X = on_bline X E Q? eqangle A B B C A D C D')
+    # txt = ('A B C = triangle A B C; D = on_circum D C A B; E = on_circum E A C B; F = on_line F A C; G = on_line G A B, angle_bisector G B C A; Q = on_line Q E A; S = on_line S A B; Y = on_line Y E Q; X = on_bline X E Q? eqangle A B B C A D C D')
     # txt = ''
     # txt = 'Q = free Q; P M F = r_triangle P M F; E = lc_tangent E F Q; H = orthocenter H M Q P; V = reflect V F M Q; T S A = ieq_triangle T S A; L N J = triangle12 L N J; I G Z R Y = pentagon I G Z R Y; C = on_dia C A R, on_opline C J Q? eqangle A D D E J S Q S'
     # txt = 'a b c = risos a b c'
@@ -110,9 +112,11 @@ def main():
         f.write(svg_text)
 
     print(f'Solving ...')
-    exit(0)
+    # exit(0)
 
     ddar.solve(graph, rules, problem, max_level=5)
+    import pdb; pdb.set_trace()
+
 
     # Randomly select a cache node to be the goal. #TODO: Is this right can we do better? Consider coverage!
     # random.seed(4)

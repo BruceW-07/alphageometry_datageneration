@@ -1,0 +1,33 @@
+# Logging configuration file for the application
+# Defines formatters, handlers, and logger settings for different modules
+version: 1
+
+# Disable all existing loggers before applying this config
+# Useful to avoid duplicate logs from imported libraries
+disable_existing_loggers: True
+
+# Define how log messages are formatted
+formatters:
+  # Default formatter: includes timestamp, logger name, log level, and the message
+  default:
+    format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+
+# Define where log messages should be output (e.g., console, file, etc.)
+handlers:
+  console:
+    class: logging.StreamHandler
+    formatter: default
+    level: INFO
+
+# Custom loggers for specific modules
+loggers:
+  generation:
+    handlers: [console]
+    level: INFO
+    propagate: false
+
+# Root logger: fallback logger if no other matches
+root:
+  # Logs INFO and higher level messages
+  level: INFO
+  handlers: [console]

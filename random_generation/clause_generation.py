@@ -229,8 +229,9 @@ class CompoundClauseGen:
                 if not clause_text.endswith('; '):
                     clause_text += '; '
 
-                clause_text += self.cg_comma_sep.generate_clauses(
-                    random.choice(range(1, self.max_comma_sep_clause + 1)))
+                # clause_text += self.cg_comma_sep.generate_clauses(
+                    # random.choice(range(1, self.max_comma_sep_clause + 1)))
+                clause_text += self.cg_comma_sep.generate_clauses(2) # generate cluase with two constructions
                 self.cg_single_clause.set_pt_ctr_def_pts(*self.cg_comma_sep.get_pt_ctr_def_pts())
         self.reset()
         return clause_text

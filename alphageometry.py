@@ -217,6 +217,88 @@ def write_solution(g: gh.Graph, p: pr.Problem, out_file: str, goal=None) -> (str
 
   return fl_solution, nl_solution
 
+def get_structured_solution(g: gh.Graph, p: pr.Problem, goal=None) -> (str, str):
+  """Output the solution to out_file.
+
+  Args:
+    g: gh.Graph object, containing the proof state.
+    p: pr.Problem object, containing the theorem.
+    out_file: file to write to, empty string to skip writing to file.
+  """
+  if goal is None:
+    goal = p.goal
+
+  setup, aux, proof_steps, refs = ddar.get_proof_steps(
+      g, goal, merge_trivials=False
+  )
+  
+  nl_solution = '\n=========================='
+  nl_solution += '\n * From theorem premises:\n'
+  fl_premises = ''
+  fl_auxiliary = ''
+  fl_goal = f"{goal.name} " + " ".join([arg.upper() for arg in goal.args]) 
+  fl_proof = ''
+
+  # Premises
+  premises_nl = []
+  premises_fl = []
+  for premises, [points] in setup:
+    if not premises: continue
+    # points
+    nl_solution += ' '.join([p.name.upper() for p in points]) + ' '
+    fl_premises += ' '.join([p.name.upper() for p in points]) + ' '
+    # premises
+    for p in premises:
+      fl_prem_statement, nl_prem_statement = natural_language_statement(p)
+      premises_nl.append(nl_prem_statement + ' [{:02}]'.format(refs[p.hashed()]))
+      premises_fl.append(fl_prem_statement + ' [{:02}]'.format(refs[p.hashed()]))
+  nl_solution += ': Points\n' + '\n'.join(premises_nl)
+  fl_premises += ': Points\n' + '\n'.join(premises_fl)
+
+  # Auxiliary
+  nl_solution += '\n\n * Auxiliary Constructions:\n'
+  aux_premises_nl = []
+  aux_premises_fl = []
+  for premises, [points] in aux:
+    nl_solution += ' '.join([p.name.upper() for p in points]) + ' '
+    for p in premises:
+      fl_prem_statement, nl_prem_statement = natural_language_statement(p)
+      aux_premises_nl.append(nl_prem_statement + ' [{:02}]'.format(refs[p.hashed()]))
+      aux_premises_fl.append(fl_prem_statement + ' [{:02}]'.format(refs[p.hashed()]))
+  if len(aux_premises_nl) > 0:
+    nl_solution += ': Points\n' + '\n'.join(aux_premises_nl)
+    fl_auxiliary += ': Points\n' + '\n'.join(aux_premises_fl)
+
+  # Proof
+  # some special case where the deduction rule has a well known name.
+  r2name = {
+      'r32': '(SSS)',
+      'r33': '(SAS)',
+      'r34': '(Similar Triangles)',
+      'r35': '(Similar Triangles)',
+      'r36': '(ASA)',
+      'r37': '(ASA)',
+      'r38': '(Similar Triangles)',
+      'r39': '(Similar Triangles)',
+      'r40': '(Congruent Triangles)',
+      'a00': '(Distance chase)',
+      'a01': '(Ratio chase)',
+      'a02': '(Angle chase)',
+  }
+  nl_solution += '\n\n * Proof steps:\n'
+  for i, step in enumerate(proof_steps):
+    _, [con] = step
+    fl, nl = proof_step_string(step, refs, last_step=i == len(proof_steps) - 1)
+    rule_name = r2name.get(con.rule_name, '')
+    nl = nl.replace('\u21d2', f'{rule_name}\u21d2 ')
+    nl_solution += '{:03}. '.format(i + 1) + nl + '\n'
+    fl_proof += '{:03}. '.format(i + 1) + fl + '\n'
+  fl_proof = fl_proof[:-1]
+  nl_solution += '==========================\n'
+
+  return nl_solution, fl_premises, fl_goal, fl_auxiliary, fl_proof
+
+
 #
 # def get_lm(ckpt_init: str, vocab_path: str) -> lm.LanguageModelInference:
 #   lm.parse_gin_configuration(
