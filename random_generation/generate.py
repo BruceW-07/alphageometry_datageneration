@@ -27,6 +27,7 @@ from verb.verbalize import IndependentStatementVerbalization
 from alphageometry import write_solution, get_structured_solution
 from generate_random_proofs import convert_var_names_from_alpha_geo_names
 from parse_constrains.get_rand_constrain import ConstraintGenerator
+from shave_cons import find_essential_cons
 
 def construct_problem(fl_statement):
     try:
@@ -99,6 +100,8 @@ def merge_datafiles(dir, search_depth):
                 for row in reader:
                     writer.writerow(row)
 
+
+
 def run(pid, search_depth, samples_per_thread, dir):
     random.seed(pid)
 
@@ -134,11 +137,17 @@ def run(pid, search_depth, samples_per_thread, dir):
             shuffle_var_names=False)
         verbalizer = IndependentStatementVerbalization(None)
 
+        shaved = False
+        shaved_statement = ''
         sid = pid * samples_per_thread
         while sid < (pid + 1) * samples_per_thread:
-            fl_statement = cc_gen.generate_clauses()
+            if shaved:
+                fl_statement = shaved_statement
+            else:
+                fl_statement = cc_gen.generate_clauses()
+                
             n_clauses = len(fl_statement.split(';'))
-            if n_clauses < 4: continue
+            if not shaved_statement and n_clauses < 4: continue
 
             problem = construct_problem(fl_statement)
             if problem is None: continue
@@ -165,7 +174,7 @@ def run(pid, search_depth, samples_per_thread, dir):
                     continue
 
                 # get proof
-                nl_solution, fl_premises, fl_goal, fl_auxiliary, fl_proof = get_structured_solution(
+                setup, nl_solution, fl_premises, fl_goal, fl_auxiliary, fl_proof = get_structured_solution(
                     graph, 
                     problem, 
                     goal=pr.Construction(goal_fl[0], list(goal_fl[1:])), 
@@ -173,7 +182,19 @@ def run(pid, search_depth, samples_per_thread, dir):
                 if fl_premises == '':# or fl_premises == ': Points\n':
                     logger.debug("Naive proof using premises from clauses directly") 
                     continue
-
+                       
+                if not shaved:
+                    try:
+                        signal.alarm(10)
+                        shaved_statement = find_essential_cons(graph, setup, definitions)
+                        signal.alarm(0)
+                    except:
+                        logging.debug("Graph couldn't be shaved in reasonable time.")
+                        shaved = False
+                        continue
+                    shaved = True
+                    continue # to rename points
+                
                 goal_fl[1:] = [point_name.capitalize() for point_name in goal_fl[1:]]
                 # var_map = cc_gen.get_varname_2_alpha_geo_var_map()
                 #only needed when variable names are scrambled. But then should be passed into the proof too
@@ -197,6 +218,7 @@ def run(pid, search_depth, samples_per_thread, dir):
                 })
                 logger.info(f'Written sample {sid} to {filename}')
                 sid += 1
+                shaved = False
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Create problem fl - nl dataset')

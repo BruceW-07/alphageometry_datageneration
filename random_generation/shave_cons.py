@@ -101,7 +101,7 @@ def find_essential_cons(g, setup, definitions):
                     if point.name not in edge[arg] and arg not in new_points:
                         edge[arg].add(point.name)
                         degree[point.name] += 1
-                        print(f"edge: {arg} -> {point.name}")
+                        # print(f"edge: {arg} -> {point.name}")
 
         
         assert (flag == True and len(cons_of_point[point.name]) > 0) \
@@ -113,7 +113,7 @@ def find_essential_cons(g, setup, definitions):
     
     queue = []
     for point in seen_points:
-        print(f"degree {point} = {degree[point]}")
+        # print(f"degree {point} = {degree[point]}")
         if degree[point] == 0:
             queue.append(point)
     
