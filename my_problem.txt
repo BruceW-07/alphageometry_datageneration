@@ -1,12 +1,8 @@
-examples/complete2/009/complete_016_7_Book_00EE_06_E051-32.gex
-a b c = triangle a b c; d = eq_triangle d a b; e = eq_triangle e a c; f = eq_triangle f c b ? para e d c f
-examples/complete2/013/complete_002_6_GDD_FULL_41-60_56.gex
-m a b = iso_triangle m a b; o = circle o a b m; d = on_line d m o, on_line d a b; e = on_tline e a a o, on_pline e m a o ? cong m e m d
 0
-A B C D = eqdia_quadrangle A B C D; E F G = iso_triangle E F G; H = on_circle H B F; I = foot I E A F; J = on_tline J G I C ? cyclic E F E F
-3
-A B C D = r_trapezoid A B C D; E F G = iso_triangle E F G; H = mirror H A C; I J K L = quadrangle I J K L; M N O P = r_trapezoid M N O P; Q R S T = eq_quadrangle Q R S T ? para P O M P
+A B C = triangle12 A B C; D E F G = eq_trapezoid D E F G; H = on_line H E D; I J K L = trapezoid I J K L; M N O P Q = pentagon M N O P Q; R = on_opline R L G; S T = tangent S T E J R; U = on_aline U D C K P T ? eqangle E T S T R T R S
 1
-A B C = triangle12 A B C; D E F G = eq_trapezoid D E F G; H = on_line H E D; I J K L = trapezoid I J K L; M N O P Q = pentagon M N O P Q; R = on_opline R L G; S T = tangent S T E J R; U = on_aline U D C K P T ? simtri2 T T R S E S
+A B C D = eqdia_quadrangle A B C D; E = on_circle E A B; F = lc_tangent F A D; G = circumcenter G D F A; H I = trisect H I C F B; J K L M = incenter2 J K L M F A H; N = on_circle N K D ? eqangle A J A M J L L M
 2
-A B C D E = pentagon A B C D E; F G H I = trapezoid F G H I; J K L = r_triangle J K L; M N O P Q = pentagon M N O P Q; R S T = triangle12 R S T; U = on_line U K D, on_bline U P D; V = on_bline V E F, s_angle U S V 90 ? eqratio T R R S T S S T
+A B C = iso_triangle A B C; D = nsquare D B C; E F G = risos E F G; H I = trisegment H I C F; J = angle_bisector J G C E; K = on_opline K F I; L = on_line L F G, eqangle3 L F A I K D ? cong C H F I
+3
+A B C D = eqdia_quadrangle A B C D; E F G H = eq_trapezoid E F G H; I = foot I C B G; J K L = r_triangle J K L; M N = tangent M N E F K; O P Q R = rectangle O P Q R; S = excenter S J H P; T U V W = ninepoints T U V W S R D; X Y Z A0 = r_trapezoid X Y Z A0; B0 C0 D0 E0 = eq_trapezoid B0 C0 D0 E0; F0 = eqangle3 F0 E A0 K D T, on_opline F0 S Z ? eqratio D T T U U V S V
