@@ -64,13 +64,13 @@ def construct_graph(problem, definitions, timeout=10):
         return None
     return graph
 
-def is_valid_goal(goal):
+def is_naive_goal(goal):
     # case1: cong AB = AB, para AB ∥∥ AB, rconst AB:AB=1, aconst ∠AB AB=0
     if goal[0] == 'cong' or goal[0] == 'para' or goal[0] == 'rconst' or goal[0] == 'aconst':
         left = {goal[1], goal[2]}
         right = {goal[3], goal[4]}
         if left == right:
-            return False
+            return True
     elif goal[0] == 'eqratio':
         #case2: eqratio AB/CD = DC/BA, eqangle ∠AB CD = ∠DC/BA
         seg_1 = {goal[1], goal[2]}
@@ -78,10 +78,10 @@ def is_valid_goal(goal):
         seg_3 = {goal[5], goal[6]}
         seg_4 = {goal[7], goal[8]}
         if seg_1 == seg_3 and seg_2 == seg_4:
-            return False
+            return True
         if seg_1 == seg_4 and seg_2 == seg_3:
-            return False
-    return True
+            return True
+    return False
 
 def merge_datafiles(dir, search_depth):
     csv_files = glob.glob(os.path.join(dir, f'geometry_depth{search_depth}_*.csv'))
@@ -160,7 +160,9 @@ def run(pid, search_depth, samples_per_thread, dir):
             possible_goals = list(graph.cache.keys())
             if len(possible_goals) > 0:
                 goal_fl = list(random.choice(possible_goals))
-                if not is_valid_goal(goal_fl): continue
+                if is_naive_goal(goal_fl):
+                    logger.debug("Naive goal like AB = BA")
+                    continue
 
                 # get proof
                 nl_solution, fl_premises, fl_goal, fl_auxiliary, fl_proof = get_structured_solution(
@@ -168,7 +170,9 @@ def run(pid, search_depth, samples_per_thread, dir):
                     problem, 
                     goal=pr.Construction(goal_fl[0], list(goal_fl[1:])), 
                 )
-                if fl_premises == '': continue
+                if fl_premises == '':# or fl_premises == ': Points\n':
+                    logger.debug("Naive proof using premises from clauses directly") 
+                    continue
 
                 goal_fl[1:] = [point_name.capitalize() for point_name in goal_fl[1:]]
                 # var_map = cc_gen.get_varname_2_alpha_geo_var_map()
@@ -191,8 +195,8 @@ def run(pid, search_depth, samples_per_thread, dir):
                     'fl_auxiliary': fl_auxiliary,
                     'fl_proof': fl_proof
                 })
-                sid += 1
                 logger.info(f'Written sample {sid} to {filename}')
+                sid += 1
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Create problem fl - nl dataset')
