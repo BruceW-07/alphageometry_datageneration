@@ -6,3 +6,5 @@ A B C D = eqdia_quadrangle A B C D; E = on_circle E A B; F = lc_tangent F A D; G
 A B C = iso_triangle A B C; D = nsquare D B C; E F G = risos E F G; H I = trisegment H I C F; J = angle_bisector J G C E; K = on_opline K F I; L = on_line L F G, eqangle3 L F A I K D ? cong C H F I
 3
 A B C D = eqdia_quadrangle A B C D; E F G H = eq_trapezoid E F G H; I = foot I C B G; J K L = r_triangle J K L; M N = tangent M N E F K; O P Q R = rectangle O P Q R; S = excenter S J H P; T U V W = ninepoints T U V W S R D; X Y Z A0 = r_trapezoid X Y Z A0; B0 C0 D0 E0 = eq_trapezoid B0 C0 D0 E0; F0 = eqangle3 F0 E A0 K D T, on_opline F0 S Z ? eqratio D T T U U V S V
+4
+A B C = triangle A B C; D = on_circum D C A B; E = eqdistance E A D C, lc_tangent E A B; F = eqdistance F E A B, on_tline F C D A ? eqangle A B B C A D C D

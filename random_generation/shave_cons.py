@@ -54,10 +54,13 @@ def find_essential_cons(g, setup, definitions):
                 edge[point.name] = set()
                 degree[point.name] = 0
         for prem in prems:
-            prem_str = ' '.join([prem.name] + [p.name for p in prem.args])
+            # prem_str = ' '.join([prem.name] + [p.name for p in prem.args])
+            prem_str = ' '.join(pr.hashed(prem.name, prem.args))
             if prem_str not in essential_prems:
                 essential_prems.add(prem_str)
-    
+
+    # print(f"essential prems: {essential_prems}")
+
     while len(essential_points) > 0:
         point = essential_points.pop()
         point = g._name2point[point]
@@ -65,7 +68,8 @@ def find_essential_cons(g, setup, definitions):
         flag = False
 
         for basic in point.basics:
-            prem_str = ' '.join([basic[0]] + [p.name for p in basic[1]])
+            # prem_str = ' '.join([basic[0]] + [p.name for p in basic[1]])
+            prem_str = ' '.join(pr.hashed(basic[0], basic[1]))
             con = basic[2].construction
             cdef = definitions[con.name]
             mapping = dict(zip(cdef.construction.args, con.args))
