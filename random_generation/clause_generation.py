@@ -2,8 +2,19 @@ import copy
 import random
 import string
 from graph import INTERSECT, NO_SKETCH
-from reorder_lists import get_ordering_index
 
+def get_ordering_index(first_list, second_list):
+    """
+    Returns the indices to reorder the second list to match the order of the first list.
+    """
+    # Create a mapping from element to its index in the first list
+    index_map = {element: index for index, element in enumerate(first_list)}
+
+    # Create a list of tuples (index_in_first_list, index_in_second_list)
+    ordering = sorted((index_map[element], index) for index, element in enumerate(second_list))
+
+    # Extract and return just the indices from the second list in the correct order
+    return [index for _, index in ordering]
 
 def get_wrapped_points(all_points, start, num_points):
     """

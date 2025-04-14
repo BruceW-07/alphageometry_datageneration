@@ -44,6 +44,7 @@ def merge_datafiles(dir, search_depth):
                     writer.writerow(header)  # 只写一次表头
                 for row in reader:
                     writer.writerow(row)
+            os.remove(file)    
 
 def construct_problem(fl_statement):
     try:
@@ -210,20 +211,41 @@ def run(pid, search_depth, samples_per_thread, dir):
                 logging.debug("Graph couldn't be shaved in reasonable time.")
                 continue # failed. skip this problem
             shaved_statement += ' ? ' + ' '.join(goal)
-            renamed_problem = construct_problem(shaved_statement)
-            fl_statement_new = to_upper(renamed_problem.txt())
 
-            # output problem, goal and proof
-            fl_goal = renamed_problem.goal.txt().split(' ')
+            # Rename points
+            problem = construct_problem(shaved_statement)
+            if problem is None: continue
+            goal = problem.goal.txt().split(' ')
+            graph = construct_graph(problem, definitions)
+            if graph is None: continue
+            try:
+                ddar.solve(graph, rules, problem, max_level=search_depth)
+            except ValueError:
+                logger.debug("Encountered ValueError while solving.")
+                continue
+            except (nm.InvalidLineIntersectError, nm.InvalidQuadSolveError):
+                logger.debug("Encountered InvalidLineIntersectError or InvalidQuadSolveError while solving.")
+                continue
+            setup, nl_solution, fl_premises, fl_goal, fl_auxiliary, fl_proof = get_structured_solution(
+                graph, 
+                problem, 
+                goal=pr.Construction(goal[0], list(goal[1:])), 
+            )
+
+             # Output problem, goal and proof
+            fl_problem = to_upper(problem.txt())
+            nl_problem = verbalizer.problem_fl_2_nl(fl_problem) # problem_fl_2_nl will skip goal
+            fl_goal = problem.goal.txt().split(' ')
             fl_goal[1:] = [point_name.capitalize() for point_name in fl_goal[1:]]
             pretty_goal = pretty_nl(fl_goal[0], fl_goal[1:])
             nl_goal = ' Prove that ' + translate_step(pretty_goal)
-            nl_prob = verbalizer.problem_fl_2_nl(fl_statement_new)
+            fl_goal = problem.goal.txt()
+            
             writer.writerow({
                 'id': sid,
                 'n_clauses': n_clauses,
-                'nl_statement': nl_prob + nl_goal,
-                'fl_statement': fl_statement_new,
+                'nl_statement': nl_problem + nl_goal,
+                'fl_statement': fl_problem,
                 'nl_solution': nl_solution,
                 'fl_premises': fl_premises,
                 'fl_goal': fl_goal,
