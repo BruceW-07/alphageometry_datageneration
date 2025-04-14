@@ -100,7 +100,28 @@ def merge_datafiles(dir, search_depth):
                 for row in reader:
                     writer.writerow(row)
 
-
+def to_upper(fl_statement):
+    # statement, goal = fl_statement.split(' ? ')
+    clauses = fl_statement.split('; ')
+    statement = ''
+    for clause in clauses:
+        points, cons = clause.split(' = ')
+        statement += points.upper() + ' = '
+        cons = cons.split(', ')
+        for i in range(len(cons)):
+            con = cons[i].split(' ')
+            if con[0] == 'midp':
+                con[0] = 'midpoint'
+            statement += con[0] + ' '
+            for j in range(1, len(con)):
+                statement += con[j].upper();
+                if j != len(con) - 1:
+                    statement += ' '
+            if i != len(cons) - 1:
+                statement += ', '
+        statement += '; '
+    statement = statement[:-2]
+    return statement
 
 def run(pid, search_depth, samples_per_thread, dir):
     random.seed(pid)
@@ -172,7 +193,7 @@ def run(pid, search_depth, samples_per_thread, dir):
                 if is_naive_goal(goal_fl):
                     logger.debug("Naive goal like AB = BA")
                     continue
-
+                
                 # get proof
                 setup, nl_solution, fl_premises, fl_goal, fl_auxiliary, fl_proof = get_structured_solution(
                     graph, 
@@ -182,7 +203,7 @@ def run(pid, search_depth, samples_per_thread, dir):
                 if fl_premises == '':# or fl_premises == ': Points\n':
                     logger.debug("Naive proof using premises from clauses directly") 
                     continue
-                       
+                
                 if not shaved:
                     try:
                         signal.alarm(10)
@@ -194,8 +215,9 @@ def run(pid, search_depth, samples_per_thread, dir):
                         continue
                     shaved = True
                     continue # to rename points
-                
                 goal_fl[1:] = [point_name.capitalize() for point_name in goal_fl[1:]]
+                fl_statement = problem.txt()
+                fl_statement = to_upper(fl_statement)
                 # var_map = cc_gen.get_varname_2_alpha_geo_var_map()
                 #only needed when variable names are scrambled. But then should be passed into the proof too
                 # goal_fl = convert_var_names_from_alpha_geo_names(var_map, goal_fl)
