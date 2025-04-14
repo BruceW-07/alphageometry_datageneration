@@ -243,17 +243,18 @@ def get_structured_solution(g: gh.Graph, p: pr.Problem, goal=None) -> (str, str)
   premises_nl = []
   premises_fl = []
   for premises, [points] in setup:
-    if not premises: continue
     # points
     nl_solution += ' '.join([p.name.upper() for p in points]) + ' '
     fl_premises += ' '.join([p.name.upper() for p in points]) + ' '
+    if not premises: continue
     # premises
     for p in premises:
       fl_prem_statement, nl_prem_statement = natural_language_statement(p)
       premises_nl.append(nl_prem_statement + ' [{:02}]'.format(refs[p.hashed()]))
       premises_fl.append(fl_prem_statement + ' [{:02}]'.format(refs[p.hashed()]))
-  nl_solution += ': Points\n' + '\n'.join(premises_nl)
-  fl_premises += ': Points\n' + '\n'.join(premises_fl)
+  if len(premises_fl) > 0:
+    nl_solution += ': Points\n' + '\n'.join(premises_nl)
+    fl_premises += ': Points\n' + '\n'.join(premises_fl)
 
   # Auxiliary
   nl_solution += '\n\n * Auxiliary Constructions:\n'
@@ -261,6 +262,7 @@ def get_structured_solution(g: gh.Graph, p: pr.Problem, goal=None) -> (str, str)
   aux_premises_fl = []
   for premises, [points] in aux:
     nl_solution += ' '.join([p.name.upper() for p in points]) + ' '
+    fl_auxiliary += ' '.join([p.name.upper() for p in points]) + ' '
     for p in premises:
       fl_prem_statement, nl_prem_statement = natural_language_statement(p)
       aux_premises_nl.append(nl_prem_statement + ' [{:02}]'.format(refs[p.hashed()]))
@@ -296,7 +298,7 @@ def get_structured_solution(g: gh.Graph, p: pr.Problem, goal=None) -> (str, str)
   fl_proof = fl_proof[:-1]
   nl_solution += '==========================\n'
 
-  return nl_solution, fl_premises, fl_goal, fl_auxiliary, fl_proof
+  return setup, nl_solution, fl_premises, fl_goal, fl_auxiliary, fl_proof
 
 
 #
