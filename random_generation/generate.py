@@ -101,8 +101,8 @@ def is_naive_goal(goal):
     return False
 
 def to_upper(fl_statement):
-    # statement, goal = fl_statement.split(' ? ')
-    clauses = fl_statement.split('; ')
+    statement, goal = fl_statement.split(' ? ')
+    clauses = statement.split('; ')
     statement = ''
     for clause in clauses:
         points, cons = clause.split(' = ')
@@ -121,7 +121,9 @@ def to_upper(fl_statement):
                 statement += ', '
         statement += '; '
     statement = statement[:-2]
-    return statement
+    goal = goal.split(' ')
+    goal[1:] = [point.upper() for point in goal[1:]]
+    return statement + ' ? ' + ' '.join(goal)
 
 def run(pid, search_depth, samples_per_thread, dir):
     random.seed(pid)
@@ -186,6 +188,10 @@ def run(pid, search_depth, samples_per_thread, dir):
                 continue
             # Randomly select a goal
             goal = list(random.choice(possible_goals))
+            if goal[0] == 'aconst' or goal[0] == 'rconst':
+                logger.debug("Goal is 'aconst' or 'rconst'. Skip this problem.")
+                continue
+            # Convert goal to the format used in AlphaGeo
             # Get solution
             setup, nl_solution, fl_premises, fl_goal, fl_auxiliary, fl_proof = get_structured_solution(
                 graph, 
@@ -203,23 +209,24 @@ def run(pid, search_depth, samples_per_thread, dir):
             except:
                 logging.debug("Graph couldn't be shaved in reasonable time.")
                 continue # failed. skip this problem
-            fl_statement_new = to_upper(shaved_statement)
-            
+            shaved_statement += ' ? ' + ' '.join(goal)
+            renamed_problem = construct_problem(shaved_statement)
+            fl_statement_new = to_upper(renamed_problem.txt())
+
             # output problem, goal and proof
-            fl_goal = goal
+            fl_goal = renamed_problem.goal.txt().split(' ')
             fl_goal[1:] = [point_name.capitalize() for point_name in fl_goal[1:]]
             pretty_goal = pretty_nl(fl_goal[0], fl_goal[1:])
             nl_goal = ' Prove that ' + translate_step(pretty_goal)
-            fl_goal = ' ? ' + ' '.join(fl_goal)
             nl_prob = verbalizer.problem_fl_2_nl(fl_statement_new)
             writer.writerow({
                 'id': sid,
                 'n_clauses': n_clauses,
                 'nl_statement': nl_prob + nl_goal,
-                'fl_statement': fl_statement_new + fl_goal,
+                'fl_statement': fl_statement_new,
                 'nl_solution': nl_solution,
                 'fl_premises': fl_premises,
-                'fl_goal': fl_goal[3:],
+                'fl_goal': fl_goal,
                 'fl_auxiliary': fl_auxiliary,
                 'fl_proof': fl_proof
             })
