@@ -57,7 +57,6 @@ def find_essential_cons(g, setup, definitions, translate_to_upper=False):
     degree = {}
     used_cons = set()
     statement = ""
-
     for prems, [points] in setup:
         for point in points:
             if point.name not in seen_points:
@@ -70,7 +69,9 @@ def find_essential_cons(g, setup, definitions, translate_to_upper=False):
             if prem_str not in essential_prems:
                 essential_prems.add(prem_str)
 
+    # print(f"essential points: {essential_points}")
     # print(f"essential prems: {essential_prems}")
+    # import pdb; pdb.set_trace()
 
     while len(essential_points) > 0:
         point = essential_points.pop()
@@ -87,8 +88,9 @@ def find_essential_cons(g, setup, definitions, translate_to_upper=False):
             mapping = dict(zip(cdef.construction.args, con.args))
             new_points = [mapping[point] for point in cdef.points]
             con_str = ' '.join(new_points) + ' = ' + con.txt()
-
+            
             # print(f"point: {point.name}, basic: {prem_str}, con: {con_str}")
+            # import pdb; pdb.set_trace()
 
             # use the current basic to check whether the construction is essential
             if con_str not in essential_cons:
@@ -160,7 +162,7 @@ def find_essential_cons(g, setup, definitions, translate_to_upper=False):
             if degree[p] == 0:
                 queue.append(p)
     
-    return statement[:-2]
+    return statement[:-2] # remove "; " at the end
 
 def main(argv):
 

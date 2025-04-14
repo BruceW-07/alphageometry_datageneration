@@ -29,6 +29,22 @@ from generate_random_proofs import convert_var_names_from_alpha_geo_names
 from parse_constrains.get_rand_constrain import ConstraintGenerator
 from shave_cons import find_essential_cons
 
+def merge_datafiles(dir, search_depth):
+    csv_files = glob.glob(os.path.join(dir, f'geometry_depth{search_depth}_*.csv'))
+    csv_files.sort()
+    output_file = os.path.join(dir, f'geometry_depth{search_depth}.csv')
+    with open(output_file, 'w', newline='', encoding='utf-8') as out_f:
+        writer = None
+        for i, file in enumerate(csv_files):
+            with open(file, 'r', encoding='utf-8') as in_f:
+                reader = csv.reader(in_f)
+                header = next(reader)  # 读取表头
+                if writer is None:
+                    writer = csv.writer(out_f)
+                    writer.writerow(header)  # 只写一次表头
+                for row in reader:
+                    writer.writerow(row)
+
 def construct_problem(fl_statement):
     try:
         problem = pr.Problem.from_txt(fl_statement)
@@ -83,22 +99,6 @@ def is_naive_goal(goal):
         if seg_1 == seg_4 and seg_2 == seg_3:
             return True
     return False
-
-def merge_datafiles(dir, search_depth):
-    csv_files = glob.glob(os.path.join(dir, f'geometry_depth{search_depth}_*.csv'))
-    csv_files.sort()
-    output_file = os.path.join(dir, f'geometry_depth{search_depth}.csv')
-    with open(output_file, 'w', newline='', encoding='utf-8') as out_f:
-        writer = None
-        for i, file in enumerate(csv_files):
-            with open(file, 'r', encoding='utf-8') as in_f:
-                reader = csv.reader(in_f)
-                header = next(reader)  # 读取表头
-                if writer is None:
-                    writer = csv.writer(out_f)
-                    writer.writerow(header)  # 只写一次表头
-                for row in reader:
-                    writer.writerow(row)
 
 def to_upper(fl_statement):
     # statement, goal = fl_statement.split(' ? ')
@@ -158,24 +158,17 @@ def run(pid, search_depth, samples_per_thread, dir):
             shuffle_var_names=False)
         verbalizer = IndependentStatementVerbalization(None)
 
-        shaved = False
-        shaved_statement = ''
         sid = pid * samples_per_thread
         while sid < (pid + 1) * samples_per_thread:
-            if shaved:
-                fl_statement = shaved_statement
-            else:
-                fl_statement = cc_gen.generate_clauses()
-                
+            # Generate a random problem
+            fl_statement = cc_gen.generate_clauses()
             n_clauses = len(fl_statement.split(';'))
-            if not shaved_statement and n_clauses < 4: continue
-
+            if n_clauses < 4: continue
+            # Find goals
             problem = construct_problem(fl_statement)
             if problem is None: continue
-
             graph = construct_graph(problem, definitions)
             if graph is None: continue
-
             try:
                 ddar.solve(graph, rules, problem, max_level=search_depth)
             except ValueError:
@@ -184,63 +177,54 @@ def run(pid, search_depth, samples_per_thread, dir):
             except (nm.InvalidLineIntersectError, nm.InvalidQuadSolveError):
                 logger.debug("Encountered InvalidLineIntersectError or InvalidQuadSolveError while solving.")
                 continue
-
-            # Randomly select a cache node to be the goal. 
-            # TODO: Is this right can we do better? Consider coverage!
-            possible_goals = list(graph.cache.keys())
-            if len(possible_goals) > 0:
-                goal_fl = list(random.choice(possible_goals))
-                if is_naive_goal(goal_fl):
-                    logger.debug("Naive goal like AB = BA")
-                    continue
-                
-                # get proof
-                setup, nl_solution, fl_premises, fl_goal, fl_auxiliary, fl_proof = get_structured_solution(
-                    graph, 
-                    problem, 
-                    goal=pr.Construction(goal_fl[0], list(goal_fl[1:])), 
-                )
-                if fl_premises == '':# or fl_premises == ': Points\n':
-                    logger.debug("Naive proof using premises from clauses directly") 
-                    continue
-                
-                if not shaved:
-                    try:
-                        signal.alarm(10)
-                        shaved_statement = find_essential_cons(graph, setup, definitions)
-                        signal.alarm(0)
-                    except:
-                        logging.debug("Graph couldn't be shaved in reasonable time.")
-                        shaved = False
-                        continue
-                    shaved = True
-                    continue # to rename points
-                goal_fl[1:] = [point_name.capitalize() for point_name in goal_fl[1:]]
-                fl_statement = problem.txt()
-                fl_statement = to_upper(fl_statement)
-                # var_map = cc_gen.get_varname_2_alpha_geo_var_map()
-                #only needed when variable names are scrambled. But then should be passed into the proof too
-                # goal_fl = convert_var_names_from_alpha_geo_names(var_map, goal_fl)
-                pretty_goal = pretty_nl(goal_fl[0], goal_fl[1:])
-                goal_nl = ' Prove that ' + translate_step(pretty_goal)
-                goal_fl = ' ? ' + ' '.join(goal_fl)
-                # nl_prob = get_nl_problem_statement(fl_statement)
-                nl_prob = verbalizer.problem_fl_2_nl(fl_statement)
-
-                writer.writerow({
-                    'id': sid,
-                    'n_clauses': n_clauses,
-                    'nl_statement': nl_prob + goal_nl,
-                    'fl_statement': fl_statement + goal_fl,
-                    'nl_solution': nl_solution,
-                    'fl_premises': fl_premises,
-                    'fl_goal': fl_goal,
-                    'fl_auxiliary': fl_auxiliary,
-                    'fl_proof': fl_proof
-                })
-                logger.info(f'Written sample {sid} to {filename}')
-                sid += 1
-                shaved = False
+            all_goals = list(graph.cache.keys())
+            possible_goals = []
+            for goal in all_goals:
+                if not is_naive_goal(goal):
+                    possible_goals.append(goal)
+            if len(possible_goals) == 0:
+                continue
+            # Randomly select a goal
+            goal = list(random.choice(possible_goals))
+            # Get solution
+            setup, nl_solution, fl_premises, fl_goal, fl_auxiliary, fl_proof = get_structured_solution(
+                graph, 
+                problem, 
+                goal=pr.Construction(goal[0], list(goal[1:])), 
+            )
+            if fl_premises == '':
+                logger.debug("Naive proof using premises from clauses directly") 
+                continue
+            # Shave the statement
+            try:
+                signal.alarm(15)
+                shaved_statement = find_essential_cons(graph, setup, definitions)
+                signal.alarm(0)
+            except:
+                logging.debug("Graph couldn't be shaved in reasonable time.")
+                continue # failed. skip this problem
+            fl_statement_new = to_upper(shaved_statement)
+            
+            # output problem, goal and proof
+            fl_goal = goal
+            fl_goal[1:] = [point_name.capitalize() for point_name in fl_goal[1:]]
+            pretty_goal = pretty_nl(fl_goal[0], fl_goal[1:])
+            nl_goal = ' Prove that ' + translate_step(pretty_goal)
+            fl_goal = ' ? ' + ' '.join(fl_goal)
+            nl_prob = verbalizer.problem_fl_2_nl(fl_statement_new)
+            writer.writerow({
+                'id': sid,
+                'n_clauses': n_clauses,
+                'nl_statement': nl_prob + nl_goal,
+                'fl_statement': fl_statement_new + fl_goal,
+                'nl_solution': nl_solution,
+                'fl_premises': fl_premises,
+                'fl_goal': fl_goal[3:],
+                'fl_auxiliary': fl_auxiliary,
+                'fl_proof': fl_proof
+            })
+            logger.info(f'Written sample {sid} to {filename}')
+            sid += 1
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Create problem fl - nl dataset')
