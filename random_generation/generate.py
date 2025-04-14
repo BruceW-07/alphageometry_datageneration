@@ -100,34 +100,28 @@ def is_naive_goal(goal):
             return True
     return False
 
-# def find_goals(definitions, rules, search_depth, fl_statement):
-#     problem = construct_problem(fl_statement)
-#     if problem is None: return False, []
-
-#     graph = construct_graph(problem, definitions)
-#     if graph is None: return False, []
-
-#     try:
-#         ddar.solve(graph, rules, problem, max_level=search_depth)
-#     except ValueError:
-#         logger.debug("Encountered ValueError while solving.")
-#         return False, []
-#     except (nm.InvalidLineIntersectError, nm.InvalidQuadSolveError):
-#         logger.debug("Encountered InvalidLineIntersectError or InvalidQuadSolveError while solving.")
-#         return False, []
-    
-#     all_goals = list(graph.cache.keys())
-#     possible_goals = []
-#     for goal_fl in all_goals:
-#         if is_naive_goal(goal_fl):
-#             logger.debug("Naive goal like AB = BA")
-#         else:
-#             possible_goals.append(goal_fl)
-#     if len(possible_goals) == 0:
-#         logger.debug("No possible goals found.")
-#         return False, []
-#     else:
-#         return True, problem, graph, possible_goals
+def to_upper(fl_statement):
+    # statement, goal = fl_statement.split(' ? ')
+    clauses = fl_statement.split('; ')
+    statement = ''
+    for clause in clauses:
+        points, cons = clause.split(' = ')
+        statement += points.upper() + ' = '
+        cons = cons.split(', ')
+        for i in range(len(cons)):
+            con = cons[i].split(' ')
+            if con[0] == 'midp':
+                con[0] = 'midpoint'
+            statement += con[0] + ' '
+            for j in range(1, len(con)):
+                statement += con[j].upper();
+                if j != len(con) - 1:
+                    statement += ' '
+            if i != len(cons) - 1:
+                statement += ', '
+        statement += '; '
+    statement = statement[:-2]
+    return statement
 
 def run(pid, search_depth, samples_per_thread, dir):
     random.seed(pid)
@@ -164,8 +158,6 @@ def run(pid, search_depth, samples_per_thread, dir):
             shuffle_var_names=False)
         verbalizer = IndependentStatementVerbalization(None)
 
-        # shaved = False
-        # shaved_statement = ''
         sid = pid * samples_per_thread
         while sid < (pid + 1) * samples_per_thread:
             # Generate a random problem
@@ -192,7 +184,6 @@ def run(pid, search_depth, samples_per_thread, dir):
                     possible_goals.append(goal)
             if len(possible_goals) == 0:
                 continue
-            # is_success, problem, graph, possible_goals = find_goals(definitions, rules, cc_gen, fl_statement)
             # Randomly select a goal
             goal = list(random.choice(possible_goals))
             # Get solution
@@ -212,7 +203,7 @@ def run(pid, search_depth, samples_per_thread, dir):
             except:
                 logging.debug("Graph couldn't be shaved in reasonable time.")
                 continue # failed. skip this problem
-            fl_statement_new = shaved_statement
+            fl_statement_new = to_upper(shaved_statement)
             
             # output problem, goal and proof
             fl_goal = goal

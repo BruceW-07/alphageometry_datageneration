@@ -35,7 +35,19 @@ SHAVE_OUT_FILE = flags.DEFINE_string(
     'shave_out_file', '', 'path to the solution output file.'
 )  # pylint: disable=line-too-long
 
-def find_essential_cons(g, setup, definitions):
+def pretty(con, delete_point=False, to_upper=False):
+    points, con_str = con.split(' = ')
+    points = points.split(' ')
+    con_str = con_str.split(' ')
+    if to_upper:
+        points = [p.capitalize() for p in points]
+        con_str = [con_str[i].capitalize() if i > 0 else con_str[i] for i in range(len(con_str))]
+    else :
+        points = [p for p in points]
+        con_str = [con_str[i] if i > 0 else con_str[i] for i in range(len(con_str))]
+    return ' '.join(points) + ' = ' + ' '.join(con_str) if not delete_point else ' '.join(con_str)
+
+def find_essential_cons(g, setup, definitions, translate_to_upper=False):
     essential_points = []
     seen_points = set()
     essential_prems = set()
@@ -53,7 +65,6 @@ def find_essential_cons(g, setup, definitions):
                 edge[point.name] = set()
                 degree[point.name] = 0
         for prem in prems:
-            # prem_str = ' '.join([prem.name] + [p.name for p in prem.args])
             prem_str = ' '.join(pr.hashed(prem.name, prem.args))
             if prem_str not in essential_prems:
                 essential_prems.add(prem_str)
@@ -69,9 +80,10 @@ def find_essential_cons(g, setup, definitions):
         flag = False
 
         for basic in point.basics:
-            # prem_str = ' '.join([basic[0]] + [p.name for p in basic[1]])
             prem_str = ' '.join(pr.hashed(basic[0], basic[1]))
             con = basic[2].construction
+            if con.name == 'midp':
+                con.name = 'midpoint'
             cdef = definitions[con.name]
             mapping = dict(zip(cdef.construction.args, con.args))
             new_points = [mapping[point] for point in cdef.points]
@@ -107,6 +119,7 @@ def find_essential_cons(g, setup, definitions):
                     if point.name not in edge[arg] and arg not in new_points:
                         edge[arg].add(point.name)
                         degree[point.name] += 1
+
                         # print(f"edge: {arg} -> {point.name}")
 
         
@@ -127,10 +140,22 @@ def find_essential_cons(g, setup, definitions):
 
     while len(queue) > 0:
         point = queue.pop(0)
-        for con in cons_of_point[point]:
-            if con not in used_cons:
+        # for con in cons_of_point[point]:
+        #     if con not in used_cons:
+        #         used_cons.add(con)
+        #         statement += f"{con}; "
+        con_list = list(cons_of_point[point])
+        assert 1 <= len(con_list) <= 2
+        con = con_list[0]
+        if con not in used_cons:
+            used_cons.add(con)
+            statement += f"{pretty(con, to_upper=translate_to_upper)}"
+            if len(con_list) > 1:
+                con = con_list[1]
+                statement += ", "
                 used_cons.add(con)
-                statement += f"{con}; "
+                statement += f"{pretty(con, delete_point=True, to_upper=translate_to_upper)}"
+            statement += "; "
 
         for p in edge[point]:
             degree[p] -= 1

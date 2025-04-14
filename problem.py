@@ -246,9 +246,9 @@ class Problem:
   
   def txt(self) -> str:
     return (
-        '; '.join([c.txt() for c in self.clauses]) + ' ? ' + self.goal.txt()
+        '; '.join([c.txt() for c in self.clauses]) + (' ? ' + self.goal.txt()
         if self.goal
-        else ''
+        else '')
     )
 
   def setup_str_from_problem(self, definitions: list[Definition]) -> str:
