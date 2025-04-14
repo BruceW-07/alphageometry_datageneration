@@ -296,7 +296,7 @@ def get_structured_solution(g: gh.Graph, p: pr.Problem, goal=None) -> (str, str)
   fl_proof = fl_proof[:-1]
   nl_solution += '==========================\n'
 
-  return nl_solution, fl_premises, fl_goal, fl_auxiliary, fl_proof
+  return setup, nl_solution, fl_premises, fl_goal, fl_auxiliary, fl_proof
 
 
 #
