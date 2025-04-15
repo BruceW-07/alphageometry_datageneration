@@ -2,6 +2,8 @@
 import re
 import collections
 import os
+import glob
+import argparse
 import statistics
 import matplotlib.pyplot as plt
 import numpy as np
@@ -186,16 +188,15 @@ def write_statistics_to_file(stats, output_file):
             plt.savefig(pie_chart_path)
             plt.close()
 
-def main():
+def main(dir):
     """Main function to analyze problem files."""
     files_to_analyze = [
         '../imo_ag_30.txt',
         '../jgex_ag_231.txt',
-        'dataset/geometry_depth10.csv'
     ]
+    files_to_analyze += glob.glob(os.path.join(dir, f'geometry_depth*.txt'))
     
     # 创建输出目录（如果不存在）
-    # output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
     output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dataset")
     os.makedirs(output_dir, exist_ok=True)
     
@@ -232,4 +233,7 @@ def main():
         write_statistics_to_file(combined_stats, combined_output_file)
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--dir', default='dataset')
+    args = parser.parse_args()
+    main(args.dir)
