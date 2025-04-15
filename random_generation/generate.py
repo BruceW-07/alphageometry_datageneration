@@ -207,13 +207,11 @@ def run(pid, max_clauses, search_depth, samples_per_thread, dir):
             # goal = list(random.choice(possible_goals))
             # Or ... Find the solution for all goals
             for goal in all_goals:
-                if not is_naive_goal(goal):
+                if is_naive_goal(goal):
                     continue
-                goal = list(goal)
                 if goal[0] == 'aconst' or goal[0] == 'rconst':
                     logger.debug("Goal is 'aconst' or 'rconst'. Skip this problem.")
                     continue
-                # Convert goal to the format used in AlphaGeo
                 # Get solution
                 setup, aux, nl_solution, fl_premises, fl_goal, fl_auxiliary, fl_proof = get_structured_solution(
                     graph, 
@@ -227,20 +225,20 @@ def run(pid, max_clauses, search_depth, samples_per_thread, dir):
 
                 # Shave the statement
                 try:
-                    signal.alarm(15)
+                    signal.alarm(10)
                     shaved_statement = find_essential_cons(graph, setup + aux, definitions)
                     signal.alarm(0)
                 except:
-                    logging.debug("Graph couldn't be shaved in reasonable time.")
-                    continue # failed. skip this problem
+                    logging.debug("Problem couldn't be shaved in reasonable time.")
+                    continue
                 shaved_statement += ' ? ' + ' '.join(goal)
-                n_clauses = len(shaved_statement.split(';'))
-                if n_clauses < 4: continue
+                n_clauses = len([c for c in shaved_statement.split(';') if 'free' not in c])
+                if n_clauses < 3: continue
 
                 # Rename points
                 shaved_problem = construct_problem(shaved_statement)
                 if shaved_problem is None: continue
-                goal = shaved_problem.goal.txt().split(' ')
+                shaved_goal = shaved_problem.goal.txt().split(' ')
                 shaved_graph = construct_graph(shaved_problem, definitions)
                 if shaved_graph is None: continue
                 try:
@@ -255,20 +253,18 @@ def run(pid, max_clauses, search_depth, samples_per_thread, dir):
                     _, _, nl_solution, fl_premises, fl_goal, fl_auxiliary, fl_proof = get_structured_solution(
                         shaved_graph, 
                         shaved_problem, 
-                        goal=pr.Construction(goal[0], list(goal[1:])), 
+                        goal=pr.Construction(shaved_goal[0], list(shaved_goal[1:])), 
                     )
                 except:
                     logger.warning("Encountered error while solving shaved problem.")
                     continue
-                if fl_premises == '':
-                    logger.debug("Naive proof using premises from clauses directly") 
-                    continue
                 if len(fl_proof.split('\n')) < 3:
+                    logger.debug("Naive proof using premises from clauses directly") 
                     continue
 
                 # Output problem, goal and proof
                 fl_problem = to_upper(shaved_problem.txt())
-                nl_problem = verbalizer.problem_fl_2_nl(fl_problem) # problem_fl_2_nl will skip goal
+                nl_problem = verbalizer.problem_fl_2_nl(fl_problem) # will ignore goal
                 fl_goal = shaved_problem.goal.txt().split(' ')
                 fl_goal[1:] = [point_name.capitalize() for point_name in fl_goal[1:]]
                 pretty_goal = pretty_nl(fl_goal[0], fl_goal[1:])

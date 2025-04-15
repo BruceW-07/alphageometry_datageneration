@@ -163,30 +163,30 @@ def write_statistics_to_file(stats, output_file):
         plt.savefig(chart_path)
         plt.close()
         
-        # 如果有很多构造函数，创建饼图展示前10个和其他
-        if len(stats['construction_names']) > 10:
-            plt.figure(figsize=(10, 10))
+        # # 如果有很多构造函数，创建饼图展示前10个和其他
+        # if len(stats['construction_names']) > 10:
+        #     plt.figure(figsize=(10, 10))
             
-            top10 = stats['construction_names'].most_common(10)
-            names = [name for name, _ in top10]
-            counts = [count for _, count in top10]
+        #     top10 = stats['construction_names'].most_common(10)
+        #     names = [name for name, _ in top10]
+        #     counts = [count for _, count in top10]
             
-            # 添加"其他"类别
-            other_count = sum(stats['construction_names'].values()) - sum(counts)
-            if other_count > 0:
-                names.append('Other')
-                counts.append(other_count)
+        #     # 添加"其他"类别
+        #     other_count = sum(stats['construction_names'].values()) - sum(counts)
+        #     if other_count > 0:
+        #         names.append('Other')
+        #         counts.append(other_count)
             
-            # 创建饼图
-            plt.pie(counts, labels=names, autopct='%1.1f%%',
-                   shadow=True, startangle=90)
-            plt.axis('equal')  # 确保饼图是圆的
-            plt.title('Distribution of Construction Functions')
+        #     # 创建饼图
+        #     plt.pie(counts, labels=names, autopct='%1.1f%%',
+        #            shadow=True, startangle=90)
+        #     plt.axis('equal')  # 确保饼图是圆的
+        #     plt.title('Distribution of Construction Functions')
             
-            # 保存饼图
-            pie_chart_path = f"{base_filename}_pie_chart.png"
-            plt.savefig(pie_chart_path)
-            plt.close()
+        #     # 保存饼图
+        #     pie_chart_path = f"{base_filename}_pie_chart.png"
+        #     plt.savefig(pie_chart_path)
+        #     plt.close()
 
 def main(dir):
     """Main function to analyze problem files."""
@@ -194,7 +194,7 @@ def main(dir):
         '../imo_ag_30.txt',
         '../jgex_ag_231.txt',
     ]
-    files_to_analyze += glob.glob(os.path.join(dir, f'geometry_depth*.txt'))
+    files_to_analyze += glob.glob(os.path.join(dir, f'geometry_depth[0-9]*.txt'))
     
     # 创建输出目录（如果不存在）
     output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dataset")
@@ -212,25 +212,25 @@ def main(dir):
         output_file = os.path.join(output_dir, f"{base_filename}_stats.txt")
         write_statistics_to_file(stats, output_file)
     
-    # Combine statistics for both files
-    if all(os.path.exists(f) for f in files_to_analyze):
-        combined_stats = {
-            'problem_count': 0,
-            'clause_counts': [],
-            'construction_counts': [],
-            'construction_names': collections.Counter()
-        }
+    # # Combine statistics for both files
+    # if all(os.path.exists(f) for f in files_to_analyze):
+    #     combined_stats = {
+    #         'problem_count': 0,
+    #         'clause_counts': [],
+    #         'construction_counts': [],
+    #         'construction_names': collections.Counter()
+    #     }
         
-        for filename in files_to_analyze:
-            stats = analyze_problem_file(filename)
-            combined_stats['problem_count'] += stats['problem_count']
-            combined_stats['clause_counts'].extend(stats['clause_counts'])
-            combined_stats['construction_counts'].extend(stats['construction_counts'])
-            combined_stats['construction_names'].update(stats['construction_names'])
+    #     for filename in files_to_analyze:
+    #         stats = analyze_problem_file(filename)
+    #         combined_stats['problem_count'] += stats['problem_count']
+    #         combined_stats['clause_counts'].extend(stats['clause_counts'])
+    #         combined_stats['construction_counts'].extend(stats['construction_counts'])
+    #         combined_stats['construction_names'].update(stats['construction_names'])
         
-        # 将组合统计结果写入文件
-        combined_output_file = os.path.join(output_dir, "stats_combined.txt")
-        write_statistics_to_file(combined_stats, combined_output_file)
+    #     # 将组合统计结果写入文件
+    #     combined_output_file = os.path.join(output_dir, "stats_combined.txt")
+    #     write_statistics_to_file(combined_stats, combined_output_file)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
