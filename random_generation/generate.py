@@ -61,7 +61,7 @@ def merge_datafiles(dir, search_depth):
                     row[0] = idx
                     idx += 1
                     writer.writerow([idx])
-                    writer.writerow([row[4]])
+                    writer.writerow([row[4].strip('"')])
             os.remove(file)
     return idx + 1    
 
