@@ -10,3 +10,7 @@ A B C D = eqdia_quadrangle A B C D; E F G H = eq_trapezoid E F G H; I = foot I C
 A B C = triangle A B C; D = on_circum D C A B; E = eqdistance E A D C, lc_tangent E A B; F = eqdistance F E A B, on_tline F C D A ? eqangle A B B C A D C D
 5
 a = free a; c = free c; e = eq_triangle e a c; f = psquare f c e ? aconst c f a f 7pi/12
+6
+A = free A; B = free B; C D = square A B C D; E = on_bline E B A; F = nsquare F B E ? eqangle B C C F B F B C
+7
+A = free A; B = free B; C = free C; D E F G = incenter2 D E F G C B A; H = lc_tangent H B G ? perp B G D F

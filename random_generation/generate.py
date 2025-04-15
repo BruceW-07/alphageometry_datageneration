@@ -196,7 +196,7 @@ def run(pid, search_depth, samples_per_thread, dir):
                 continue
             # Convert goal to the format used in AlphaGeo
             # Get solution
-            setup, nl_solution, fl_premises, fl_goal, fl_auxiliary, fl_proof = get_structured_solution(
+            setup, aux, nl_solution, fl_premises, fl_goal, fl_auxiliary, fl_proof = get_structured_solution(
                 graph, 
                 problem, 
                 goal=pr.Construction(goal[0], list(goal[1:])), 
@@ -209,7 +209,7 @@ def run(pid, search_depth, samples_per_thread, dir):
             # Shave the statement
             try:
                 signal.alarm(15)
-                shaved_statement = find_essential_cons(graph, setup, definitions)
+                shaved_statement = find_essential_cons(graph, setup + aux, definitions)
                 signal.alarm(0)
             except:
                 logging.debug("Graph couldn't be shaved in reasonable time.")
@@ -226,11 +226,13 @@ def run(pid, search_depth, samples_per_thread, dir):
                 ddar.solve(graph, rules, problem, max_level=search_depth)
             except ValueError:
                 logger.debug("Encountered ValueError while solving.")
+                print(f"ValueError \n {fl_statement} ? {' '.join(goal)}")
                 continue
             except (nm.InvalidLineIntersectError, nm.InvalidQuadSolveError):
                 logger.debug("Encountered InvalidLineIntersectError or InvalidQuadSolveError while solving.")
+                print(f"numerical error \n {fl_statement} ? {' '.join(goal)}")
                 continue
-            setup, nl_solution, fl_premises, fl_goal, fl_auxiliary, fl_proof = get_structured_solution(
+            _, _, nl_solution, fl_premises, fl_goal, fl_auxiliary, fl_proof = get_structured_solution(
                 graph, 
                 problem, 
                 goal=pr.Construction(goal[0], list(goal[1:])), 
