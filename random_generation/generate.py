@@ -141,6 +141,8 @@ def run(pid, search_depth, samples_per_thread, dir):
         field_names = [
             'id', 
             'n_clauses', 
+            'fl_statement_old',
+            'nl_solution_old',
             'nl_statement', 
             'fl_statement', 
             'nl_solution', 
@@ -199,6 +201,8 @@ def run(pid, search_depth, samples_per_thread, dir):
                 problem, 
                 goal=pr.Construction(goal[0], list(goal[1:])), 
             )
+            fl_statement_old = problem.txt() + ' ? ' + ' '.join(goal)
+            nl_solution_old = nl_solution
             if fl_premises == '':
                 logger.debug("Naive proof using premises from clauses directly") 
                 continue
@@ -244,6 +248,8 @@ def run(pid, search_depth, samples_per_thread, dir):
             writer.writerow({
                 'id': sid,
                 'n_clauses': n_clauses,
+                'fl_statement_old': fl_statement_old,
+                'nl_solution_old': nl_solution_old,
                 'nl_statement': nl_problem + nl_goal,
                 'fl_statement': fl_problem,
                 'nl_solution': nl_solution,

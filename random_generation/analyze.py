@@ -189,12 +189,14 @@ def write_statistics_to_file(stats, output_file):
 def main():
     """Main function to analyze problem files."""
     files_to_analyze = [
-        'imo_ag_30.txt',
-        'jgex_ag_231.txt'
+        '../imo_ag_30.txt',
+        '../jgex_ag_231.txt',
+        'dataset/geometry_depth10.csv'
     ]
     
     # 创建输出目录（如果不存在）
-    output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+    # output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+    output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dataset")
     os.makedirs(output_dir, exist_ok=True)
     
     for filename in files_to_analyze:
@@ -206,7 +208,7 @@ def main():
         
         # 将统计结果写入文件
         base_filename = os.path.splitext(os.path.basename(filename))[0]
-        output_file = os.path.join(output_dir, f"stats_{base_filename}.txt")
+        output_file = os.path.join(output_dir, f"{base_filename}_stats.txt")
         write_statistics_to_file(stats, output_file)
     
     # Combine statistics for both files
