@@ -61,7 +61,7 @@ def merge_datafiles(dir, search_depth):
                     row[0] = idx
                     idx += 1
                     writer.writerow([idx])
-                    writer.writerow([row[4].strip('"')])
+                    writer.writerow([row[3].strip('"')])
             os.remove(file)
     return idx + 1    
 
@@ -161,13 +161,14 @@ def run(pid, max_clauses, search_depth, samples_per_thread, dir):
             'id', 
             'n_clauses', 
             'fl_statement_origin',
-            'nl_statement', 
             'fl_statement', 
+            'nl_statement', 
             'nl_solution', 
-            'fl_premises',
-            'fl_goal',
-            'fl_auxiliary',
-            'fl_proof'
+            'data',
+            # 'fl_premises',
+            # 'fl_goal',
+            # 'fl_auxiliary',
+            # 'fl_proof'
         ]
         writer = csv.DictWriter(csvfile, fieldnames=field_names, quoting=csv.QUOTE_MINIMAL, quotechar='"')
         writer.writeheader()
@@ -259,7 +260,7 @@ def run(pid, max_clauses, search_depth, samples_per_thread, dir):
                     logger.warning("Encountered error while solving shaved problem.")
                     continue
                 if len(fl_proof.split('\n')) < 3:
-                    logger.debug("Naive proof using premises from clauses directly") 
+                    logger.debug("Naive proof") 
                     continue
 
                 # Output problem, goal and proof
@@ -269,19 +270,20 @@ def run(pid, max_clauses, search_depth, samples_per_thread, dir):
                 fl_goal[1:] = [point_name.capitalize() for point_name in fl_goal[1:]]
                 pretty_goal = pretty_nl(fl_goal[0], fl_goal[1:])
                 nl_goal = ' Prove that ' + translate_step(pretty_goal)
-                fl_goal = shaved_problem.goal.txt()
-                
+                # fl_goal = shaved_problem.goal.txt()
+                # import pdb; pdb.set_trace()
                 writer.writerow({
                     'id': idx,
                     'n_clauses': n_clauses,
                     'fl_statement_origin': fl_statement_origin,
-                    'nl_statement': nl_problem + nl_goal,
                     'fl_statement': fl_problem,
+                    'nl_statement': nl_problem + nl_goal,
                     'nl_solution': nl_solution,
-                    'fl_premises': fl_premises,
-                    'fl_goal': fl_goal,
-                    'fl_auxiliary': fl_auxiliary,
-                    'fl_proof': fl_proof
+                    'data': shaved_problem.setup_str_from_problem(definitions),
+                    # 'fl_premises': fl_premises,
+                    # 'fl_goal': fl_goal,
+                    # 'fl_auxiliary': fl_auxiliary,
+                    # 'fl_proof': fl_proof
                 })
                 logger.info(f'Thread {pid} written sample {idx} to {filename}')
                 idx += 1
