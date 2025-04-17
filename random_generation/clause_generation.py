@@ -33,7 +33,7 @@ def get_wrapped_points(all_points, start, num_points):
 
 
 def get_apha_geo_solver_var(va_idx):
-    letter_part = string.ascii_uppercase[va_idx % 26]
+    letter_part = string.ascii_lowercase[va_idx % 26]
     number_part = va_idx // 26
 
     # Prepare the point name

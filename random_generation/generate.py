@@ -8,6 +8,7 @@ import time
 import csv
 import yaml
 import glob
+from collections import defaultdict
 import logging, logging.config
 logger = logging.getLogger("generation")
     
@@ -17,6 +18,7 @@ import numericals as nm
 import problem as pr
 from clause_generation import CompoundClauseGen
 import signal
+import pretty as pt
 from generate_random_proofs import TimeoutException
 from utils.loading_utils import load_definitions_and_rules
 from prettier_print.pretty_problem_statement import get_nl_problem_statement
@@ -27,11 +29,10 @@ from alphageometry import write_solution, get_structured_solution
 
 
 def merge_datafiles(dir, search_depth):
-    csv_files = glob.glob(os.path.join(dir, f'geometry_depth{search_depth}_[0-9]*.csv'))
+    csv_files = glob.glob(os.path.join(dir, f'geometry_depth{search_depth}_[0-9]*_.csv'))
     csv_files.sort()
-    output_file1 = os.path.join(dir, f'geometry_depth{search_depth}.csv')
-    output_file2 = os.path.join(dir, f'geometry_depth{search_depth}.txt')
-    with open(output_file1, 'w', newline='', encoding='utf-8') as out_f:
+    output_file = os.path.join(dir, f'geometry_depth{search_depth}_raw.csv')
+    with open(output_file, 'w', newline='', encoding='utf-8') as out_f:
         writer = None
         idx = 0
         for i, file in enumerate(csv_files):
@@ -45,6 +46,7 @@ def merge_datafiles(dir, search_depth):
                     row[0] = idx
                     idx += 1
                     writer.writerow(row)
+    output_file2 = os.path.join(dir, f'geometry_depth{search_depth}_pr.txt')
     with open(output_file2, 'w', newline='', encoding='utf-8') as out_f:
         writer = None
         idx = 0
@@ -52,13 +54,22 @@ def merge_datafiles(dir, search_depth):
             with open(file, 'r', encoding='utf-8') as in_f:
                 reader = csv.reader(in_f)
                 header = next(reader)  # 读取表头
-                if writer is None:
-                    writer = csv.writer(out_f, csv.QUOTE_NONE)
                 for row in reader:
                     row[0] = idx
                     idx += 1
-                    writer.writerow([idx])
-                    writer.writerow([row[3]])
+                    out_f.write(str(idx) + '\n')
+                    out_f.write(row[3] + '\n')
+    output_file3 = os.path.join(dir, f'geometry_depth{search_depth}_llm.txt')
+    with open(output_file3, 'w', newline='', encoding='utf-8') as out_f:
+        writer = None
+        idx = 0
+        for i, file in enumerate(csv_files):
+            with open(file, 'r', encoding='utf-8') as in_f:
+                reader = csv.reader(in_f)
+                header = next(reader)  # 读取表头
+                for row in reader:
+                    idx += 1
+                    out_f.write(row[-1] + '\n')
             os.remove(file)
     return idx   
 
@@ -142,6 +153,93 @@ def to_upper(fl_statement):
     goal[1:] = [point.upper() for point in goal[1:]]
     return statement + ' ? ' + ' '.join(goal)
 
+def llm_data(graph, problem, definitions):
+    
+    """Construct the <theorem_premises> string from Problem object."""
+    clauses, aux_clauses, points_list, aux_points_list = ddar.get_essential_clauses(graph, problem.goal)
+
+
+    string = []
+    data_tmp = defaultdict(list)
+    points_premise = set()
+    for clause in problem.clauses:
+        group = {}
+        p2deps = defaultdict(list)
+        for c in clause.constructions:
+            cdef = definitions[c.name]
+
+            if len(c.args) != len(cdef.construction.args):
+                assert len(c.args) + len(clause.points) == len(cdef.construction.args)
+                c.args = clause.points + c.args
+
+            mapping = dict(zip(cdef.construction.args, c.args))
+            for points, bs in cdef.basics:
+                points = tuple([mapping[x] for x in points])
+                for p in points:
+                    group[p] = points
+
+                for b in bs:
+                    args = [mapping[a] for a in b.args]
+                    name = b.name
+                    if b.name in ['s_angle', 'aconst']:
+                        x, y, z, v = args
+                        name = 'aconst'
+                        v = int(v)
+
+                        if v < 0:
+                            v = -v
+                            x, z = z, x
+
+                        m, n = simplify(int(v), 180)
+                        args = [y, z, y, x, f'{m}pi/{n}']
+
+                    p2deps[points].append(pr.hashed_txt(name, args))
+
+        for k, v in p2deps.items():
+            p2deps[k] = pr.sort_deps(v)
+
+        points = clause.points
+        while points:
+            p = points[0]
+            gr = group[p]
+            points = [x for x in points if x not in gr]
+
+            deps_str = []
+            for dep in p2deps[gr]:
+                dep_str = pt.pretty(dep)
+
+                if dep[0] == 'aconst':
+                    m, n = map(int, dep[-1].split('pi/'))
+                    mn = f'{m}. pi / {n}.'
+                    dep_str = ' '.join(dep_str.split()[:-1] + [mn])
+                deps_str.append(dep_str)
+            
+            data_tmp[' '.join(gr)] = deps_str
+                
+    data = '{S} '
+    ref = 0
+    string_premise = []
+    for k, v in data_tmp.items():
+        if not all(p in aux_points_list for p in k.split(' ')):
+            v = [s + ' {:02}'.format(ref+i) for i, s in enumerate(v)]
+            ref += len(v)
+            string_premise.append(k + ' : ' + ' '.join(v))
+    data += ' ; '.join([s.strip() for s in string_premise])
+
+    data += ' ? '+ pt.pretty([problem.goal.name] + problem.goal.args)
+
+    string_aux = []
+    for k, v in data_tmp.items():
+        if all(p in aux_points_list for p in k.split(' ')):
+            v = [s + ' {:02}'.format(ref+i) for i, s in enumerate(v)]
+            ref += len(v)
+            string_aux.append(k + ' : ' + ' '.join(v))
+    if len(string_aux) > 0:
+        data += ' {F1} x00 '
+        data += ' ; '.join([s.strip() for s in string_aux])
+    return data
+
+
 def run(pid, max_clauses, search_depth, samples_per_thread, dir):
     random.seed(pid)
 
@@ -151,7 +249,7 @@ def run(pid, max_clauses, search_depth, samples_per_thread, dir):
     definitions, rules = load_definitions_and_rules(defs_path, rules_path)
 
     # Write data to the CSV file
-    filename = os.path.join(dir, f'geometry_depth{search_depth}_{pid}.csv')
+    filename = os.path.join(dir, f'geometry_depth{search_depth}_{pid}_.csv')
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     with (open(filename, 'w', newline='', encoding='utf-8') as csvfile):
         field_names = [
@@ -162,10 +260,6 @@ def run(pid, max_clauses, search_depth, samples_per_thread, dir):
             'nl_statement', 
             'nl_solution', 
             'data',
-            # 'fl_premises',
-            # 'fl_goal',
-            # 'fl_auxiliary',
-            # 'fl_proof'
         ]
         writer = csv.DictWriter(csvfile, fieldnames=field_names, quoting=csv.QUOTE_MINIMAL, quotechar='"')
         writer.writeheader()
@@ -197,7 +291,7 @@ def run(pid, max_clauses, search_depth, samples_per_thread, dir):
             except (nm.InvalidLineIntersectError, nm.InvalidQuadSolveError):
                 logger.debug("Encountered InvalidLineIntersectError or InvalidQuadSolveError while solving.")
                 continue
-            all_goals = list(graph.cache.keys())
+            all_goals = list(graph.cache.keys())[::-1]
 
             # Randomly select a goal
             # goal = list(random.choice(possible_goals))
@@ -210,7 +304,7 @@ def run(pid, max_clauses, search_depth, samples_per_thread, dir):
                     continue
                 goal = pr.Construction(goal[0], list(goal[1:]))
                 # Get essential clauses for each goal
-                clauses, aux_clauses = ddar.get_essential_clauses(graph, goal)
+                clauses, aux_clauses, _, _ = ddar.get_essential_clauses(graph, goal)
                 shaved_statement = []
                 for clause in problem.clauses:
                     if clause.txt() in clauses or clause.txt() in aux_clauses:
@@ -219,6 +313,7 @@ def run(pid, max_clauses, search_depth, samples_per_thread, dir):
                 shaved_statement = '; '.join(shaved_statement) + ' ? ' + goal.txt() if goal else ''
 
                 # Rename points and get solution
+                # import pdb; pdb.set_trace()
                 shaved_problem = construct_problem(shaved_statement)
                 if shaved_problem is None: continue
                 shaved_graph = construct_graph(shaved_problem, definitions)
@@ -231,9 +326,12 @@ def run(pid, max_clauses, search_depth, samples_per_thread, dir):
                 except (nm.InvalidLineIntersectError, nm.InvalidQuadSolveError):
                     logger.debug("Encountered InvalidLineIntersectError or InvalidQuadSolveError while solving.")
                     continue
-                setup, aux, nl_solution, fl_premises, fl_goal, fl_auxiliary, fl_proof = get_structured_solution(
-                    shaved_graph, shaved_problem)
-                if len(fl_proof.split('\n')) < 3:
+                try:
+                    fl_solution, nl_solution = write_solution(shaved_graph, shaved_problem, '')
+                except:
+                    logger.warning("Encountered error while writing solution. why???")
+                    continue
+                if len(fl_solution.split('\n')) < 6:
                     logger.debug("Naive proof") 
                     continue
 
@@ -245,6 +343,11 @@ def run(pid, max_clauses, search_depth, samples_per_thread, dir):
                 shaved_goal[1:] = [point_name.upper() for point_name in shaved_goal[1:]]
                 pretty_goal = pretty_nl(shaved_goal[0], shaved_goal[1:])
                 nl_goal = ' Prove that ' + translate_step(pretty_goal)
+                try:
+                    data = llm_data(shaved_graph, shaved_problem, definitions)
+                except:
+                    logger.debug("Encountered error while generating llm data. why ???")
+                    continue
 
                 writer.writerow({
                     'id': idx,
@@ -253,10 +356,13 @@ def run(pid, max_clauses, search_depth, samples_per_thread, dir):
                     'fl_statement': fl_problem,
                     'nl_statement': (nl_problem + nl_goal).strip('"'),
                     'nl_solution': nl_solution.strip('"'),
-                    'data': shaved_problem.setup_str_from_problem(definitions),
+                    'data': llm_data(shaved_graph, shaved_problem, definitions)
+                    # shaved_problem.setup_str_from_problem(definitions)+ '\n' +
                 })
                 logger.info(f'Thread {pid} written sample {idx} to {filename}')
                 idx += 1
+                if idx == samples_per_thread:
+                    break
               
 
 if __name__ == "__main__":

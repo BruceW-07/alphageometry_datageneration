@@ -160,19 +160,28 @@ def get_essential_clauses(g, goal):
   goal_args = g.names2nodes(goal.args)
   query = Dependency(goal.name, goal_args, None, None)
   setup, aux, log, points, aux_points = trace_back.get_logs_with_points(query, g, merge_trivials=False)
-
+  
+  points_ = set()
   essential_clauses = set()
   for p in iter(points):
+    points_.add(p.name)
+    # if p is essential, then all points in p.clause.points are essential
+    for pp in p.clause.points:
+      points_.add(pp)
     essential_clauses.add(p.clause.txt())
   for con in setup:
     if con.clause:
       essential_clauses.add(con.clause.txt())
 
+  aux_points_ = set()
   essential_clauses_aux = set()
   for p in iter(aux_points):
-    essential_clauses_aux.add(p.clause.txt())
+    if p.name not in points_:
+      aux_points_.add(p.name)
+    if p.clause.txt() not in essential_clauses:
+      essential_clauses_aux.add(p.clause.txt())
   for con in aux:
-    if con.clause:
+    if con.clause.txt() not in essential_clauses:
       essential_clauses_aux.add(con.clause.txt())
   
-  return essential_clauses, essential_clauses_aux
+  return essential_clauses, essential_clauses_aux, points_, aux_points_
