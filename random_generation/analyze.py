@@ -139,11 +139,12 @@ def write_statistics_to_file(stats, output_file):
         
         # 获取前20个最常见的构造函数
         top_constructions = stats['construction_names'].most_common(20)
+        total_constructions = sum(stats['construction_names'].values())
         names = [name for name, _ in top_constructions]
-        counts = [count for _, count in top_constructions]
+        frequencies = [(count / total_constructions) * 100 for _, count in top_constructions]
         
         # 创建条形图
-        bars = plt.bar(range(len(names)), counts)
+        bars = plt.bar(range(len(names)), frequencies)
         plt.xlabel('Construction Names')
         plt.ylabel('Frequency')
         plt.title('Top 20 Construction Functions')
@@ -153,7 +154,7 @@ def write_statistics_to_file(stats, output_file):
         for bar in bars:
             height = bar.get_height()
             plt.text(bar.get_x() + bar.get_width()/2., height+0.1,
-                    f'{int(height)}',
+                    f'{int(height)}%',
                     ha='center', va='bottom')
         
         plt.tight_layout()
