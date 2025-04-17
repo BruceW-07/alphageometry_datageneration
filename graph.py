@@ -2584,6 +2584,8 @@ class Graph:
 
     existing_points = self.all_points()
     new_points = [Point(name) for name in clause.points]
+    for p in new_points:
+      p.clause = clause
 
     new_points_dep_points = set()
     new_points_dep = []
@@ -2602,8 +2604,8 @@ class Graph:
       mapping = dict(zip(cdef.construction.args, c.args))
       c_name = 'midp' if c.name == 'midpoint' else c.name
       deps = EmptyDependency(level=0, rule_name=problem.CONSTRUCTION_RULE)
+      deps.clause = clause
       deps.construction = Dependency(c_name, c.args, rule_name=None, level=0)
-
       for d in cdef.deps.constructions:
         args = self.names2points([mapping[a] for a in d.args])
         new_points_dep_points.update(args)
@@ -2616,6 +2618,7 @@ class Graph:
                 d.name, args, rule_name=problem.CONSTRUCTION_RULE, level=0
             )
         ]
+        deps.why[-1].clause = clause
 
       new_points_dep += [deps]
 

@@ -22,12 +22,9 @@ from utils.loading_utils import load_definitions_and_rules
 from prettier_print.pretty_problem_statement import get_nl_problem_statement
 from pretty import pretty_nl
 from prettier_print.prettier_proof_statements import translate_step
-from utils.get_rand_gen_states import get_random_states
 from verb.verbalize import IndependentStatementVerbalization
 from alphageometry import write_solution, get_structured_solution
-from generate_random_proofs import convert_var_names_from_alpha_geo_names
-from parse_constrains.get_rand_constrain import ConstraintGenerator
-from shave_cons import find_essential_cons
+
 
 def merge_datafiles(dir, search_depth):
     csv_files = glob.glob(os.path.join(dir, f'geometry_depth{search_depth}_[0-9]*.csv'))
@@ -56,14 +53,14 @@ def merge_datafiles(dir, search_depth):
                 reader = csv.reader(in_f)
                 header = next(reader)  # 读取表头
                 if writer is None:
-                    writer = csv.writer(out_f)
+                    writer = csv.writer(out_f, csv.QUOTE_NONE)
                 for row in reader:
                     row[0] = idx
                     idx += 1
                     writer.writerow([idx])
-                    writer.writerow([row[3].strip('"')])
+                    writer.writerow([row[3]])
             os.remove(file)
-    return idx + 1    
+    return idx   
 
 def construct_problem(fl_statement):
     try:
@@ -160,7 +157,7 @@ def run(pid, max_clauses, search_depth, samples_per_thread, dir):
         field_names = [
             'id', 
             'n_clauses', 
-            'fl_statement_origin',
+            'fl_statement_full',
             'fl_statement', 
             'nl_statement', 
             'nl_solution', 
@@ -186,8 +183,6 @@ def run(pid, max_clauses, search_depth, samples_per_thread, dir):
         while idx < samples_per_thread:
             # Generate a random problem
             fl_statement = cc_gen.generate_clauses()
-            n_clauses = len(fl_statement.split(';'))
-            if n_clauses < 4: continue
 
             # Find goals
             problem = construct_problem(fl_statement)
@@ -213,33 +208,19 @@ def run(pid, max_clauses, search_depth, samples_per_thread, dir):
                 if goal[0] == 'aconst' or goal[0] == 'rconst':
                     logger.debug("Goal is 'aconst' or 'rconst'. Skip this problem.")
                     continue
-                # Get solution
-                setup, aux, nl_solution, fl_premises, fl_goal, fl_auxiliary, fl_proof = get_structured_solution(
-                    graph, 
-                    problem, 
-                    goal=pr.Construction(goal[0], list(goal[1:])), 
-                )
-                if fl_premises == '':
-                    logger.debug("Naive proof using premises from clauses directly") 
-                    continue
-                fl_statement_origin = fl_statement + ' ? ' + ' '.join(goal)
+                goal = pr.Construction(goal[0], list(goal[1:]))
+                # Get essential clauses for each goal
+                clauses, aux_clauses = ddar.get_essential_clauses(graph, goal)
+                shaved_statement = []
+                for clause in problem.clauses:
+                    if clause.txt() in clauses or clause.txt() in aux_clauses:
+                        shaved_statement.append(clause.txt())
+                n_clauses = len(shaved_statement)
+                shaved_statement = '; '.join(shaved_statement) + ' ? ' + goal.txt() if goal else ''
 
-                # Shave the statement
-                try:
-                    signal.alarm(10)
-                    shaved_statement = find_essential_cons(graph, setup + aux, definitions)
-                    signal.alarm(0)
-                except:
-                    logging.debug("Problem couldn't be shaved in reasonable time.")
-                    continue
-                shaved_statement += ' ? ' + ' '.join(goal)
-                n_clauses = len([c for c in shaved_statement.split(';') if 'free' not in c])
-                if n_clauses < 3: continue
-
-                # Rename points
+                # Rename points and get solution
                 shaved_problem = construct_problem(shaved_statement)
                 if shaved_problem is None: continue
-                shaved_goal = shaved_problem.goal.txt().split(' ')
                 shaved_graph = construct_graph(shaved_problem, definitions)
                 if shaved_graph is None: continue
                 try:
@@ -250,43 +231,32 @@ def run(pid, max_clauses, search_depth, samples_per_thread, dir):
                 except (nm.InvalidLineIntersectError, nm.InvalidQuadSolveError):
                     logger.debug("Encountered InvalidLineIntersectError or InvalidQuadSolveError while solving.")
                     continue
-                try:
-                    _, _, nl_solution, fl_premises, fl_goal, fl_auxiliary, fl_proof = get_structured_solution(
-                        shaved_graph, 
-                        shaved_problem, 
-                        goal=pr.Construction(shaved_goal[0], list(shaved_goal[1:])), 
-                    )
-                except:
-                    logger.warning("Encountered error while solving shaved problem.")
-                    continue
+                setup, aux, nl_solution, fl_premises, fl_goal, fl_auxiliary, fl_proof = get_structured_solution(
+                    shaved_graph, shaved_problem)
                 if len(fl_proof.split('\n')) < 3:
                     logger.debug("Naive proof") 
                     continue
 
                 # Output problem, goal and proof
+                fl_statement_origin = to_upper(fl_statement + ' ? ' + goal.txt())
                 fl_problem = to_upper(shaved_problem.txt())
                 nl_problem = verbalizer.problem_fl_2_nl(fl_problem) # will ignore goal
-                fl_goal = shaved_problem.goal.txt().split(' ')
-                fl_goal[1:] = [point_name.capitalize() for point_name in fl_goal[1:]]
-                pretty_goal = pretty_nl(fl_goal[0], fl_goal[1:])
+                shaved_goal = shaved_problem.goal.txt().split(' ')
+                shaved_goal[1:] = [point_name.upper() for point_name in shaved_goal[1:]]
+                pretty_goal = pretty_nl(shaved_goal[0], shaved_goal[1:])
                 nl_goal = ' Prove that ' + translate_step(pretty_goal)
-                # fl_goal = shaved_problem.goal.txt()
-                # import pdb; pdb.set_trace()
                 writer.writerow({
                     'id': idx,
                     'n_clauses': n_clauses,
-                    'fl_statement_origin': fl_statement_origin,
+                    'fl_statement_full': fl_statement_origin.strip('"'),
                     'fl_statement': fl_problem,
-                    'nl_statement': nl_problem + nl_goal,
-                    'nl_solution': nl_solution,
+                    'nl_statement': (nl_problem + nl_goal).strip('"'),
+                    'nl_solution': nl_solution.strip('"'),
                     'data': shaved_problem.setup_str_from_problem(definitions),
-                    # 'fl_premises': fl_premises,
-                    # 'fl_goal': fl_goal,
-                    # 'fl_auxiliary': fl_auxiliary,
-                    # 'fl_proof': fl_proof
                 })
                 logger.info(f'Thread {pid} written sample {idx} to {filename}')
                 idx += 1
+              
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Create problem fl - nl dataset')

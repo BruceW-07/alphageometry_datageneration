@@ -155,3 +155,24 @@ def get_proof_steps(
   aux = [(prems, [tuple(p)]) for p, prems in aux]
 
   return setup, aux, log, refs
+
+def get_essential_clauses(g, goal):
+  goal_args = g.names2nodes(goal.args)
+  query = Dependency(goal.name, goal_args, None, None)
+  setup, aux, log, points, aux_points = trace_back.get_logs_with_points(query, g, merge_trivials=False)
+
+  essential_clauses = set()
+  for p in iter(points):
+    essential_clauses.add(p.clause.txt())
+  for con in setup:
+    if con.clause:
+      essential_clauses.add(con.clause.txt())
+
+  essential_clauses_aux = set()
+  for p in iter(aux_points):
+    essential_clauses_aux.add(p.clause.txt())
+  for con in aux:
+    if con.clause:
+      essential_clauses_aux.add(con.clause.txt())
+  
+  return essential_clauses, essential_clauses_aux

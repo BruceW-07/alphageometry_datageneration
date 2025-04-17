@@ -59,7 +59,6 @@ def point_log(
   log = []
 
   levels = point_levels(setup, existing_points)
-
   for points, cons in levels:
     for con in cons:
       if con.hashed() not in ref_id:
@@ -293,6 +292,28 @@ def get_logs(
 
   return setup, aux_setup, log, setup_points
 
+def get_logs_with_points(
+    query: problem.Dependency, g: Any, merge_trivials: bool = False
+) -> tuple[
+    list[problem.Dependency],
+    list[problem.Dependency],
+    list[tuple[list[problem.Dependency], list[problem.Dependency]]],
+    set[gm.Point],
+]:
+  """Given a DAG and conclusion N, return the premise, aux, proof."""
+  query = query.why_me_or_cache(g, query.level)
+  log = recursive_traceback(query)
+  log, setup, aux_setup, points, aux_points = separate_dependency_difference(
+      query, log
+  )
+
+  setup, aux_setup, log = collx_to_coll(setup, aux_setup, log)
+
+  setup, aux_setup, log = shorten_and_shave(
+      setup, aux_setup, log, merge_trivials
+  )
+
+  return setup, aux_setup, log, points, aux_points
 
 def shorten_and_shave(
     setup: list[problem.Dependency],

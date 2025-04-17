@@ -47,6 +47,14 @@ def pretty(con, delete_point=False, to_upper=False):
         con_str = [con_str[i] if i > 0 else con_str[i] for i in range(len(con_str))]
     return ' '.join(points) + ' = ' + ' '.join(con_str) if not delete_point else ' '.join(con_str)
 
+def find_essential_clauses(g, pr):
+    essential_clauses, essential_aux_clauses = ddar.get_essential_clauses(g, pr.goal)
+    statement = []
+    for clause in pr.clauses:
+        if clause.txt() in essential_clauses or clause.txt() in essential_aux_clauses:
+            statement.append(clause.txt())
+    return '; '.join(statement) + ' ? ' + pr.goal.txt() if pr.goal else ''
+
 def find_essential_cons(g, setup, definitions, translate_to_upper=False):
     essential_points = []
     seen_points = set()
@@ -210,4 +218,26 @@ def main(argv):
     ag.run_ddar(g, shaved_problem, SHAVE_OUT_FILE.value)
 
 if __name__ == '__main__':
-    app.run(main)
+    # app.run(main)
+    definitions = pr.Definition.from_txt_file('../defs.txt', to_dict=True)
+    rules = pr.Theorem.from_txt_file('../rules.txt', to_dict=True)
+    text = 'a b c = triangle a b c; d = on_tline d b a c, on_tline d c a b; e = on_line e a c, on_line e b d ? perp a d b c'
+    text = 'A B C D = trapezoid A B C D; E = on_tline E C B A, eqdistance E A C D; F G = trisegment F G A D; H I J = triangle H I J; K = on_line K B H, angle_bisector K A J I; L = on_bline L J D; M = on_bline M C B, eqangle3 M A F G K E; N = on_circle N G F, on_circle N E F; O = intersection_cc O A F K; P = on_pline P I K N, eqdistance P H F M; Q R = square F G Q R; S T U = r_triangle S T U; V = on_line V P G, on_bline V N O ? eqangle A D S U G Q S T'
+    print('[input] ', text)
+    shaved_problem = pr.Problem.from_txt(text)
+    g, _ = gh.Graph.build_problem(shaved_problem, definitions)
+    ddar.solve(g, rules, shaved_problem, max_level=10)
+
+    setup, aux, nl_solution, fl_premises, fl_goal, fl_auxiliary, fl_proof = ag.get_structured_solution(
+                        g, 
+                        shaved_problem, 
+                    )
+    shaved_statement = find_essential_cons(g, setup + aux, definitions)
+    print('[old shaved statement - main] ', shaved_statement)
+    print('[old shaved statement - aux] ', fl_auxiliary.replace('\n', ';'))
+
+    clauses, aux_clauses = ddar.get_essential_clauses(g, shaved_problem.goal)
+    print('[new essential clauses - main] ', clauses)
+    print('[new essential clauses - aux] ', aux_clauses)
+
+    print('[output] ', find_essential_clauses(g, shaved_problem))

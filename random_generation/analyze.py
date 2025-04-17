@@ -194,8 +194,9 @@ def main(dir):
         '../imo_ag_30.txt',
         '../jgex_ag_231.txt',
     ]
-    files_to_analyze += glob.glob(os.path.join(dir, f'geometry_depth[0-9]+[.]txt'))
-    
+    files = glob.glob(os.path.join(dir, r'geometry_depth[0-9]*[.]txt'))
+    files = [f for f in files if not f.endswith('_stats.txt')]
+    files_to_analyze += files
     # 创建输出目录（如果不存在）
     output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dataset")
     os.makedirs(output_dir, exist_ok=True)

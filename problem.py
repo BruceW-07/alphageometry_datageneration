@@ -672,16 +672,19 @@ class EmptyDependency:
     self.empty = True
     self.why = []
     self.trace = None
+    self.clause = None
 
   def populate(self, name: str, args: list[gm.Point]) -> Dependency:
     dep = Dependency(name, args, self.rule_name, self.level)
     dep.trace2 = self.trace
     dep.why = list(self.why)
+    dep.clause = self.clause
     return dep
 
   def copy(self) -> EmptyDependency:
     other = EmptyDependency(self.level, self.rule_name)
     other.why = list(self.why)
+    other.clause = self.clause
     return other
 
   def extend(
@@ -759,7 +762,7 @@ class Dependency(Construction):
     self.rule_name = rule_name or ''
     self.level = level
     self.why = []
-
+    self.clause = None
     self._stat = None
     self.trace = None
     
@@ -793,6 +796,7 @@ class Dependency(Construction):
     dep = Dependency(self.name, self.args, self.rule_name, self.level)
     dep.trace = self.trace
     dep.why = list(self.why)
+    dep.clause = self.clause
     return dep
 
   def why_me_or_cache(self, g: Any, level: int) -> Dependency:
@@ -805,6 +809,7 @@ class Dependency(Construction):
     assert self.rule_name == CONSTRUCTION_RULE, self.rule_name
     dep = Dependency(self.name, self.args, self.rule_name, self.level)
     dep.why = list(self.why)
+    dep.clause = self.clause
     return dep
 
   def why_me(self, g: Any, level: int) -> None:
