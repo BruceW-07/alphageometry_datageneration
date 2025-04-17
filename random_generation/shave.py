@@ -223,6 +223,7 @@ if __name__ == '__main__':
     rules = pr.Theorem.from_txt_file('../rules.txt', to_dict=True)
     text = 'a b c = triangle a b c; d = on_tline d b a c, on_tline d c a b; e = on_line e a c, on_line e b d ? perp a d b c'
     text = 'A B C D = trapezoid A B C D; E = on_tline E C B A, eqdistance E A C D; F G = trisegment F G A D; H I J = triangle H I J; K = on_line K B H, angle_bisector K A J I; L = on_bline L J D; M = on_bline M C B, eqangle3 M A F G K E; N = on_circle N G F, on_circle N E F; O = intersection_cc O A F K; P = on_pline P I K N, eqdistance P H F M; Q R = square F G Q R; S T U = r_triangle S T U; V = on_line V P G, on_bline V N O ? eqangle A D S U G Q S T'
+    text = 'A B C D = trapezoid A B C D; E = on_tline E C B A, eqdistance E A C D; F G = trisegment F G A D; H I J = triangle H I J; K = on_line K B H, angle_bisector K A J I; L = on_bline L J D; M = on_bline M C B, eqangle3 M A F G K E; N = on_circle N G F, on_circle N E F; O = intersection_cc O A F K; P = on_pline P I K N, eqdistance P H F M; Q R = square F G Q R; S T U = r_triangle S T U; V = on_line V P G, on_bline V N O ? eqangle A D S U G Q S T'
     print('[input] ', text)
     shaved_problem = pr.Problem.from_txt(text)
     g, _ = gh.Graph.build_problem(shaved_problem, definitions)

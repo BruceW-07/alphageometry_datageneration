@@ -245,6 +245,7 @@ def run(pid, max_clauses, search_depth, samples_per_thread, dir):
                 shaved_goal[1:] = [point_name.upper() for point_name in shaved_goal[1:]]
                 pretty_goal = pretty_nl(shaved_goal[0], shaved_goal[1:])
                 nl_goal = ' Prove that ' + translate_step(pretty_goal)
+
                 writer.writerow({
                     'id': idx,
                     'n_clauses': n_clauses,
