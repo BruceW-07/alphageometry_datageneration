@@ -48,7 +48,7 @@ def pretty(con, delete_point=False, to_upper=False):
     return ' '.join(points) + ' = ' + ' '.join(con_str) if not delete_point else ' '.join(con_str)
 
 def find_essential_clauses(g, pr):
-    essential_clauses, essential_aux_clauses = ddar.get_essential_clauses(g, pr.goal)
+    essential_clauses, essential_aux_clauses, _, _ = ddar.get_essential_clauses(g, pr.goal)
     statement = []
     for clause in pr.clauses:
         if clause.txt() in essential_clauses or clause.txt() in essential_aux_clauses:
@@ -237,7 +237,7 @@ if __name__ == '__main__':
     print('[old shaved statement - main] ', shaved_statement)
     print('[old shaved statement - aux] ', fl_auxiliary.replace('\n', ';'))
 
-    clauses, aux_clauses = ddar.get_essential_clauses(g, shaved_problem.goal)
+    clauses, aux_clauses, _, _ = ddar.get_essential_clauses(g, shaved_problem.goal)
     print('[new essential clauses - main] ', clauses)
     print('[new essential clauses - aux] ', aux_clauses)
 

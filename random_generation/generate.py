@@ -179,7 +179,11 @@ def llm_data(graph, problem, definitions):
                     group[p] = points
 
                 for b in bs:
-                    args = [mapping[a] for a in b.args]
+                    if b.name == 'rconst' and c.name == 'triangle12':
+                        args = [mapping[a] for a in b.args[:-2]]
+                        args.append(0.5)
+                    else:
+                        args = [mapping[a] for a in b.args]
                     name = b.name
                     if b.name in ['s_angle', 'aconst']:
                         x, y, z, v = args
@@ -330,6 +334,8 @@ def run(pid, max_clauses, search_depth, samples_per_thread, dir):
                     fl_solution, nl_solution = write_solution(shaved_graph, shaved_problem, '')
                 except:
                     logger.warning("Encountered error while writing solution. why???")
+                    logger.warning("fl_statement\n", fl_statement)
+                    logger.warning("shaved_statement\n", shaved_statement)
                     continue
                 if len(fl_solution.split('\n')) < 6:
                     logger.debug("Naive proof") 
@@ -348,6 +354,8 @@ def run(pid, max_clauses, search_depth, samples_per_thread, dir):
                     # data = shaved_problem.setup_str_from_problem(definitions)+ '\n' +
                 except:
                     logger.warning("Encountered error while generating llm data. why ???")
+                    logger.warning("fl_statement\n", fl_statement)
+                    logger.warning("shaved_statement\n", shaved_statement)
                     continue
 
                 writer.writerow({
