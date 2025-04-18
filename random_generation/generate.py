@@ -345,8 +345,9 @@ def run(pid, max_clauses, search_depth, samples_per_thread, dir):
                 nl_goal = ' Prove that ' + translate_step(pretty_goal)
                 try:
                     data = llm_data(shaved_graph, shaved_problem, definitions)
+                    # data = shaved_problem.setup_str_from_problem(definitions)+ '\n' +
                 except:
-                    logger.debug("Encountered error while generating llm data. why ???")
+                    logger.warning("Encountered error while generating llm data. why ???")
                     continue
 
                 writer.writerow({
@@ -356,8 +357,7 @@ def run(pid, max_clauses, search_depth, samples_per_thread, dir):
                     'fl_statement': fl_problem,
                     'nl_statement': (nl_problem + nl_goal).strip('"'),
                     'nl_solution': nl_solution.strip('"'),
-                    'data': llm_data(shaved_graph, shaved_problem, definitions)
-                    # shaved_problem.setup_str_from_problem(definitions)+ '\n' +
+                    'data': data
                 })
                 logger.info(f'Thread {pid} written sample {idx} to {filename}')
                 idx += 1
