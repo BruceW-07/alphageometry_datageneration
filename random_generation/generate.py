@@ -154,10 +154,8 @@ def to_upper(fl_statement):
     return statement + ' ? ' + ' '.join(goal)
 
 def llm_data(graph, problem, definitions):
-    
     """Construct the <theorem_premises> string from Problem object."""
     clauses, aux_clauses, points_list, aux_points_list = ddar.get_essential_clauses(graph, problem.goal)
-
 
     string = []
     data_tmp = defaultdict(list)
@@ -190,7 +188,7 @@ def llm_data(graph, problem, definitions):
                             v = -v
                             x, z = z, x
 
-                        m, n = simplify(int(v), 180)
+                        m, n = pr.simplify(int(v), 180)
                         args = [y, z, y, x, f'{m}pi/{n}']
 
                     p2deps[points].append(pr.hashed_txt(name, args))
@@ -237,6 +235,7 @@ def llm_data(graph, problem, definitions):
     if len(string_aux) > 0:
         data += ' {F1} x00 '
         data += ' ; '.join([s.strip() for s in string_aux])
+        data += ' ;'
     return data
 
 
@@ -300,6 +299,7 @@ def run(pid, max_clauses, search_depth, samples_per_thread, dir):
                 if is_naive_goal(goal):
                     continue
                 if goal[0] == 'aconst' or goal[0] == 'rconst':
+                    # AlphaGeometry 1 不支持 aconst 和 rconst
                     logger.debug("Goal is 'aconst' or 'rconst'. Skip this problem.")
                     continue
                 goal = pr.Construction(goal[0], list(goal[1:]))
