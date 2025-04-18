@@ -1,5 +1,0 @@
-# Guidelines for generating new geometry problems
-Here are a few examples of Geometry problems in natural language. Your job is to produce {num_problems} more such problems. Pay special attention to match average problem complexity to IMO standard.
-Examples:
-{problems}
-Each new line should contain a new problem. Nothing else not even problem serial numbers.

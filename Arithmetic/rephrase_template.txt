@@ -1,5 +1,0 @@
-# Guidelines for Rephrasing Text
-Enhance the story with vivid, thematic phrases and terms. Combine and rearrange sentences for coherence. Use diverse sentence structures. Simplify the characters involved to just one or two, while maintaining clear pronoun references across sentences. Make sure to end with the question (which may be reworded).
-Retain all specific details of ingredients and substances, avoid adding new elements or numbers. Ensure that each sentence is understood to unambiguously refer to either addition, subtraction, multiplication, or division.
-# Using the suggestions above, rewrite the story below. Answer only with the rewritten story:
-{natural}
