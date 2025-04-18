@@ -24,14 +24,18 @@ def analyze_problem_file(filename):
     all_clause_counts = []
     all_construction_counts = []
     construction_names = collections.Counter()
+    all_goal_counts = []
+    goal_names = collections.Counter()
     
     for problem_name, problem_desc in problems:
         # Split into statement and goal
         parts = problem_desc.split('?', 1)
         if len(parts) != 2:
             statement = problem_desc
+            goal = ""
         else:
             statement = parts[0].strip()
+            goal = parts[1].strip()
         
         # Count clauses
         clauses = statement.split(';')
@@ -55,13 +59,30 @@ def analyze_problem_file(filename):
                     construction_names[name] += 1
         
         all_construction_counts.append(total_constructions)
+        
+        # Analyze goal part
+        if goal:
+            # Count constructions in the goal
+            goal_constructions = goal.split(',')
+            all_goal_counts.append(len(goal_constructions))
+            
+            # Count names in the goal
+            for goal_construction in goal_constructions:
+                parts = goal_construction.strip().split()
+                if parts:  # Make sure there's at least one part (the name)
+                    name = parts[0]
+                    goal_names[name] += 1
+        else:
+            all_goal_counts.append(0)
     
     # Return statistics
     return {
         'problem_count': len(problems),
         'clause_counts': all_clause_counts,
         'construction_counts': all_construction_counts,
-        'construction_names': construction_names
+        'construction_names': construction_names,
+        'goal_counts': all_goal_counts,
+        'goal_names': goal_names
     }
 
 def write_statistics_to_file(stats, output_file):
@@ -123,6 +144,42 @@ def write_statistics_to_file(stats, output_file):
             f.write(f"  Minimum constructions: {min_constructions}\n")
             f.write(f"  Maximum constructions: {max_constructions}\n")
         
+        # Goal statistics
+        if stats['goal_counts']:
+            avg_goals = sum(stats['goal_counts']) / len(stats['goal_counts'])
+            min_goals = min(stats['goal_counts'])
+            max_goals = max(stats['goal_counts'])
+            median_goals = statistics.median(stats['goal_counts'])
+            
+            # 计算众数
+            mode_goals = "N/A"
+            if stats['goal_counts']:
+                try:
+                    mode_goals = statistics.mode(stats['goal_counts'])
+                except statistics.StatisticsError:
+                    # 如果有多个众数
+                    counter = collections.Counter(stats['goal_counts'])
+                    max_count = max(counter.values())
+                    modes = [k for k, v in counter.items() if v == max_count]
+                    mode_goals = ', '.join(map(str, modes))
+            
+            f.write("\nGoal statistics:\n")
+            f.write(f"  Average goals per problem: {avg_goals:.2f}\n")
+            f.write(f"  Median goals: {median_goals}\n")
+            f.write(f"  Mode goals: {mode_goals}\n")
+            f.write(f"  Minimum goals: {min_goals}\n")
+            f.write(f"  Maximum goals: {max_goals}\n")
+        
+        # Goal name distribution
+        if stats['goal_names']:
+            f.write("\nGoal name distribution:\n")
+            total_goals = sum(stats['goal_names'].values())
+            
+            # Sort by frequency (most common first)
+            for name, count in stats['goal_names'].most_common():
+                percentage = (count / total_goals) * 100
+                f.write(f"  {name}: {count} occurrences ({percentage:.2f}%)\n")
+        
         # Construction name distribution
         if stats['construction_names']:
             f.write("\nConstruction name distribution:\n")
@@ -163,31 +220,37 @@ def write_statistics_to_file(stats, output_file):
         chart_path = f"{base_filename}_chart.png"
         plt.savefig(chart_path)
         plt.close()
+    
+    # 生成目标函数分布图表
+    if stats['goal_names']:
+        plt.figure(figsize=(12, 8))
         
-        # # 如果有很多构造函数，创建饼图展示前10个和其他
-        # if len(stats['construction_names']) > 10:
-        #     plt.figure(figsize=(10, 10))
-            
-        #     top10 = stats['construction_names'].most_common(10)
-        #     names = [name for name, _ in top10]
-        #     counts = [count for _, count in top10]
-            
-        #     # 添加"其他"类别
-        #     other_count = sum(stats['construction_names'].values()) - sum(counts)
-        #     if other_count > 0:
-        #         names.append('Other')
-        #         counts.append(other_count)
-            
-        #     # 创建饼图
-        #     plt.pie(counts, labels=names, autopct='%1.1f%%',
-        #            shadow=True, startangle=90)
-        #     plt.axis('equal')  # 确保饼图是圆的
-        #     plt.title('Distribution of Construction Functions')
-            
-        #     # 保存饼图
-        #     pie_chart_path = f"{base_filename}_pie_chart.png"
-        #     plt.savefig(pie_chart_path)
-        #     plt.close()
+        # 获取前20个最常见的目标函数
+        top_goals = stats['goal_names'].most_common(20)
+        total_goals = sum(stats['goal_names'].values())
+        names = [name for name, _ in top_goals]
+        frequencies = [(count / total_goals) * 100 for _, count in top_goals]
+        
+        # 创建条形图
+        bars = plt.bar(range(len(names)), frequencies)
+        plt.xlabel('Goal Names')
+        plt.ylabel('Frequency')
+        plt.title('Top 20 Goal Functions')
+        plt.xticks(range(len(names)), names, rotation=45, ha='right')
+        
+        # 添加计数标签
+        for bar in bars:
+            height = bar.get_height()
+            plt.text(bar.get_x() + bar.get_width()/2., height+0.1,
+                    f'{int(height)}%',
+                    ha='center', va='bottom')
+        
+        plt.tight_layout()
+        
+        # 保存图片
+        chart_path = f"{base_filename}_goal_chart.png"
+        plt.savefig(chart_path)
+        plt.close()
 
 def main(dir):
     """Main function to analyze problem files."""

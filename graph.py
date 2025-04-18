@@ -2075,10 +2075,10 @@ class Graph:
         if self.is_equal(ang1, ang2):
           return True
 
-    if self.check_perp([a, b, m, n]) and self.check_perp([c, d, p, q]):
-      return True
-    if self.check_perp([a, b, p, q]) and self.check_perp([c, d, m, n]):
-      return True
+    # if self.check_perp([a, b, m, n]) and self.check_perp([c, d, p, q]):
+    #   return True
+    # if self.check_perp([a, b, p, q]) and self.check_perp([c, d, m, n]):
+    #   return True
 
     return False
 
