@@ -154,8 +154,10 @@ def to_upper(fl_statement):
     return statement + ' ? ' + ' '.join(goal)
 
 def llm_data(graph, problem, definitions):
+    
     """Construct the <theorem_premises> string from Problem object."""
     clauses, aux_clauses, points_list, aux_points_list = ddar.get_essential_clauses(graph, problem.goal)
+
 
     string = []
     data_tmp = defaultdict(list)
@@ -177,11 +179,7 @@ def llm_data(graph, problem, definitions):
                     group[p] = points
 
                 for b in bs:
-                    if b.name == 'rconst' and c.name == 'triangle12':
-                        args = [mapping[a] for a in b.args[:-2]]
-                        args.append(0.5)
-                    else:
-                        args = [mapping[a] for a in b.args]
+                    args = [mapping[a] for a in b.args]
                     name = b.name
                     if b.name in ['s_angle', 'aconst']:
                         x, y, z, v = args
@@ -192,7 +190,7 @@ def llm_data(graph, problem, definitions):
                             v = -v
                             x, z = z, x
 
-                        m, n = pr.simplify(int(v), 180)
+                        m, n = simplify(int(v), 180)
                         args = [y, z, y, x, f'{m}pi/{n}']
 
                     p2deps[points].append(pr.hashed_txt(name, args))
@@ -239,20 +237,179 @@ def llm_data(graph, problem, definitions):
     if len(string_aux) > 0:
         data += ' {F1} x00 '
         data += ' ; '.join([s.strip() for s in string_aux])
-        data += ' ;'
     return data
 
 
-def run(pid, max_clauses, search_depth, samples_per_thread, dir):
-    random.seed(pid)
+# def run(pid, max_clauses, search_depth, samples_per_thread, dir):
+#     random.seed(pid)
 
+#     # Load definitions and rules
+#     defs_path = '../defs.txt'
+#     rules_path = '../rules.txt'
+#     definitions, rules = load_definitions_and_rules(defs_path, rules_path)
+
+#     # Write data to the CSV file
+#     filename = os.path.join(dir, f'geometry_depth{search_depth}_{pid}_.csv')
+#     os.makedirs(os.path.dirname(filename), exist_ok=True)
+#     with (open(filename, 'w', newline='', encoding='utf-8') as csvfile):
+#         field_names = [
+#             'id', 
+#             'n_clauses', 
+#             'fl_statement_full',
+#             'fl_statement', 
+#             'nl_statement', 
+#             'nl_solution', 
+#             'data',
+#         ]
+#         writer = csv.DictWriter(csvfile, fieldnames=field_names, quoting=csv.QUOTE_MINIMAL, quotechar='"')
+#         writer.writeheader()
+
+#         cc_gen = CompoundClauseGen(
+#             definitions, 
+#             max_comma_sep_clause=2, # setting max_comma_sep_clause > 3 is meaningless
+#             max_single_clause=1, 
+#             max_sets=max_clauses, 
+#             seed=pid,    
+#             shuffle_var_names=False)
+#         verbalizer = IndependentStatementVerbalization(None)
+
+#         idx = 0
+#         while idx < samples_per_thread:
+#             # Generate a random problem
+#             fl_statement = cc_gen.generate_clauses()
+
+#             # Find goals
+#             problem = construct_problem(fl_statement)
+#             if problem is None: continue
+#             graph = construct_graph(problem, definitions)
+#             if graph is None: continue
+#             try:
+#                 ddar.solve(graph, rules, problem, max_level=search_depth)
+#             except ValueError:
+#                 logger.debug("Encountered ValueError while solving.")
+#                 continue
+#             except (nm.InvalidLineIntersectError, nm.InvalidQuadSolveError):
+#                 logger.debug("Encountered InvalidLineIntersectError or InvalidQuadSolveError while solving.")
+#                 continue
+#             all_goals = list(graph.cache.keys())[::-1]
+
+#             # Randomly select a goal
+#             # goal = list(random.choice(possible_goals))
+#             # Or ... Find the solution for all goals
+#             for goal in all_goals:
+#                 if is_naive_goal(goal):
+#                     continue
+#                 if goal[0] == 'aconst' or goal[0] == 'rconst':
+#                     logger.debug("Goal is 'aconst' or 'rconst'. Skip this problem.")
+#                     continue
+#                 goal = pr.Construction(goal[0], list(goal[1:]))
+#                 # Get essential clauses for each goal
+#                 clauses, aux_clauses, _, _ = ddar.get_essential_clauses(graph, goal)
+#                 shaved_statement = []
+#                 for clause in problem.clauses:
+#                     if clause.txt() in clauses or clause.txt() in aux_clauses:
+#                         shaved_statement.append(clause.txt())
+#                 n_clauses = len(shaved_statement)
+#                 shaved_statement = '; '.join(shaved_statement) + ' ? ' + goal.txt() if goal else ''
+
+#                 # Rename points and get solution
+#                 # import pdb; pdb.set_trace()
+#                 shaved_problem = construct_problem(shaved_statement)
+#                 if shaved_problem is None: continue
+#                 shaved_graph = construct_graph(shaved_problem, definitions)
+#                 if shaved_graph is None: continue
+#                 try:
+#                     ddar.solve(shaved_graph, rules, shaved_problem, max_level=search_depth)
+#                 except ValueError:
+#                     logger.debug("Encountered ValueError while solving.")
+#                     continue
+#                 except (nm.InvalidLineIntersectError, nm.InvalidQuadSolveError):
+#                     logger.debug("Encountered InvalidLineIntersectError or InvalidQuadSolveError while solving.")
+#                     continue
+#                 try:
+#                     fl_solution, nl_solution = write_solution(shaved_graph, shaved_problem, '')
+#                 except:
+#                     logger.warning("Encountered error while writing solution. why???")
+#                     continue
+#                 if len(fl_solution.split('\n')) < 6:
+#                     logger.debug("Naive proof") 
+#                     continue
+
+#                 # Output problem, goal and proof
+#                 fl_statement_origin = to_upper(fl_statement + ' ? ' + goal.txt())
+#                 fl_problem = to_upper(shaved_problem.txt())
+#                 nl_problem = verbalizer.problem_fl_2_nl(fl_problem) # will ignore goal
+#                 shaved_goal = shaved_problem.goal.txt().split(' ')
+#                 shaved_goal[1:] = [point_name.upper() for point_name in shaved_goal[1:]]
+#                 pretty_goal = pretty_nl(shaved_goal[0], shaved_goal[1:])
+#                 nl_goal = ' Prove that ' + translate_step(pretty_goal)
+#                 try:
+#                     data = llm_data(shaved_graph, shaved_problem, definitions)
+#                 except:
+#                     logger.debug("Encountered error while generating llm data. why ???")
+#                     continue
+
+#                 writer.writerow({
+#                     'id': idx,
+#                     'n_clauses': n_clauses,
+#                     'fl_statement_full': fl_statement_origin.strip('"'),
+#                     'fl_statement': fl_problem,
+#                     'nl_statement': (nl_problem + nl_goal).strip('"'),
+#                     'nl_solution': nl_solution.strip('"'),
+#                     'data': llm_data(shaved_graph, shaved_problem, definitions)
+#                     # shaved_problem.setup_str_from_problem(definitions)+ '\n' +
+#                 })
+#                 logger.info(f'Thread {pid} written sample {idx} to {filename}')
+#                 idx += 1
+#                 if idx == samples_per_thread:
+#                     break
+
+def generste_fl_problems(max_clauses, problems_num, dir):
     # Load definitions and rules
     defs_path = '../defs.txt'
     rules_path = '../rules.txt'
     definitions, rules = load_definitions_and_rules(defs_path, rules_path)
 
     # Write data to the CSV file
-    filename = os.path.join(dir, f'geometry_depth{search_depth}_{pid}_.csv')
+    filename = os.path.join(dir, f'fl_problems{problems_num}.csv')
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    with (open(filename, 'w', newline='', encoding='utf-8') as csvfile):
+        field_names = [
+            'id', 
+            'fl_statement'
+        ]
+        writer = csv.DictWriter(csvfile, fieldnames=field_names, quoting=csv.QUOTE_MINIMAL, quotechar='"')
+        writer.writeheader()
+
+        cc_gen = CompoundClauseGen(
+            definitions, 
+            max_comma_sep_clause=2, # setting max_comma_sep_clause > 3 is meaningless
+            max_single_clause=1, 
+            max_sets=max_clauses, 
+            seed=42,
+            shuffle_var_names=False)
+        verbalizer = IndependentStatementVerbalization(None)
+
+        fl_statements = []
+
+        for idx in range(problems_num):
+            fl_statement = cc_gen.generate_clauses()
+            writer.writerow({
+                    'id': idx,
+                    'fl_statement': '\n' + fl_statement
+                })
+            fl_statements.append(fl_statement)
+
+        return fl_statements
+
+def run(pid, search_depth, dir, fl_statements, fl_statements_num):
+    # Load definitions and rules
+    defs_path = '../defs.txt'
+    rules_path = '../rules.txt'
+    definitions, rules = load_definitions_and_rules(defs_path, rules_path)
+
+    # Write data to the CSV file
+    filename = os.path.join(dir, f'geometry_depth{search_depth}_{pid}_tdd.csv')
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     with (open(filename, 'w', newline='', encoding='utf-8') as csvfile):
         field_names = [
@@ -266,23 +423,12 @@ def run(pid, max_clauses, search_depth, samples_per_thread, dir):
         ]
         writer = csv.DictWriter(csvfile, fieldnames=field_names, quoting=csv.QUOTE_MINIMAL, quotechar='"')
         writer.writeheader()
-
-        cc_gen = CompoundClauseGen(
-            definitions, 
-            max_comma_sep_clause=2, # setting max_comma_sep_clause > 3 is meaningless
-            max_single_clause=1, 
-            max_sets=max_clauses, 
-            seed=pid,    
-            shuffle_var_names=False)
         verbalizer = IndependentStatementVerbalization(None)
 
-        idx = 0
-        while idx < samples_per_thread:
-            # Generate a random problem
-            fl_statement = cc_gen.generate_clauses()
-
+        for i in range(fl_statements_num):
+            idx = int(fl_statements_num * pid + i)
             # Find goals
-            problem = construct_problem(fl_statement)
+            problem = construct_problem(fl_statements[idx])
             if problem is None: continue
             graph = construct_graph(problem, definitions)
             if graph is None: continue
@@ -334,7 +480,7 @@ def run(pid, max_clauses, search_depth, samples_per_thread, dir):
                     fl_solution, nl_solution = write_solution(shaved_graph, shaved_problem, '')
                 except:
                     logger.warning("Encountered error while writing solution. why???")
-                    logger.warning("fl_statement\n", fl_statement)
+                    logger.warning("fl_statement\n", fl_statements[idx])
                     logger.warning("shaved_statement\n", shaved_statement)
                     continue
                 if len(fl_solution.split('\n')) < 6:
@@ -342,7 +488,7 @@ def run(pid, max_clauses, search_depth, samples_per_thread, dir):
                     continue
 
                 # Output problem, goal and proof
-                fl_statement_origin = to_upper(fl_statement + ' ? ' + goal.txt())
+                fl_statement_origin = to_upper(fl_statements[idx] + ' ? ' + goal.txt())
                 fl_problem = to_upper(shaved_problem.txt())
                 nl_problem = verbalizer.problem_fl_2_nl(fl_problem) # will ignore goal
                 shaved_goal = shaved_problem.goal.txt().split(' ')
@@ -354,7 +500,7 @@ def run(pid, max_clauses, search_depth, samples_per_thread, dir):
                     # data = shaved_problem.setup_str_from_problem(definitions)+ '\n' +
                 except:
                     logger.warning("Encountered error while generating llm data. why ???")
-                    logger.warning("fl_statement\n", fl_statement)
+                    logger.warning("fl_statement\n", fl_statements[idx])
                     logger.warning("shaved_statement\n", shaved_statement)
                     continue
 
@@ -368,10 +514,9 @@ def run(pid, max_clauses, search_depth, samples_per_thread, dir):
                     'data': data
                 })
                 logger.info(f'Thread {pid} written sample {idx} to {filename}')
-                idx += 1
-                if idx == samples_per_thread:
+                i += 1
+                if i == fl_statements_num:
                     break
-              
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Create problem fl - nl dataset')
@@ -379,7 +524,8 @@ if __name__ == "__main__":
     parser.add_argument('--search_depth', required=True, type=int,
                         help='How many steps will the DDAR search through.')
     parser.add_argument('--n_threads', required=False, type=int, default=1)
-    parser.add_argument('--samples_per_thread', required=False, type=int, default=5)
+    # parser.add_argument('--samples_per_thread', required=False, type=int, default=5)
+    parser.add_argument('--problems_num', required=False, type=int, default=10)
     parser.add_argument('--dir', default='dataset')
     parser.add_argument('--log_level', default='info', choices=['debug', 'info', 'warning', 'error'])
     args = parser.parse_args()
@@ -390,11 +536,14 @@ if __name__ == "__main__":
     logger.setLevel(getattr(logging, args.log_level.upper()))
 
     start = time.time()
+    fl_statements = generste_fl_problems(args.max_clauses, args.problems_num, args.dir)
     if args.n_threads == 1:
-        run(0, args.max_clauses, args.search_depth, args.samples_per_thread, args.dir)
+        fl_statements_num = len(fl_statements)
+        run(0, args.search_depth, args.dir, fl_statements, fl_statements_num)
     else:
         with multiprocessing.Pool(args.n_threads) as pool:
-            pool.starmap(run, [(i, args.max_clauses, args.search_depth, args.samples_per_thread, args.dir) for i in range(args.n_threads)])
+            fl_statements_num = int(len(fl_statements) / args.n_threads)
+            pool.starmap(run, [(i, args.search_depth, args.dir, fl_statements, fl_statements_num) for i in range(args.n_threads)])
     end = time.time()
 
     n_problems = merge_datafiles(args.dir, args.search_depth)

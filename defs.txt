@@ -322,12 +322,6 @@ triangle a b c
 a : ; b : ; c :
 triangle
 
-triangle12 a b c
-c : a b c
- =
-a : ; b : ; c : rconst a b a c 1 2
-triangle12
-
 2l1c x y z i a b c o
 x : a b c o y z i, y : a b c o x z i, z : a b c o x y i, i : a b c o x y z
 a b c o = cong o a o b, ncoll a b c
