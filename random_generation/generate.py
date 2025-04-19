@@ -29,9 +29,9 @@ from alphageometry import write_solution, get_structured_solution
 
 
 def merge_datafiles(dir, search_depth):
-    csv_files = glob.glob(os.path.join(dir, f'geometry_depth{search_depth}_[0-9]*_.csv'))
+    csv_files = glob.glob(os.path.join(dir, f'geometry_depth{search_depth}_[0-9]*_tdd.csv'))
     csv_files.sort()
-    output_file = os.path.join(dir, f'geometry_depth{search_depth}_raw.csv')
+    output_file = os.path.join(dir, f'geometry_depth{search_depth}_tdd_raw.csv')
     with open(output_file, 'w', newline='', encoding='utf-8') as out_f:
         writer = None
         idx = 0
@@ -46,7 +46,7 @@ def merge_datafiles(dir, search_depth):
                     row[0] = idx
                     idx += 1
                     writer.writerow(row)
-    output_file2 = os.path.join(dir, f'geometry_depth{search_depth}_pr.txt')
+    output_file2 = os.path.join(dir, f'geometry_depth{search_depth}_tdd_pr.txt')
     with open(output_file2, 'w', newline='', encoding='utf-8') as out_f:
         writer = None
         idx = 0
@@ -59,7 +59,7 @@ def merge_datafiles(dir, search_depth):
                     idx += 1
                     out_f.write(str(idx) + '\n')
                     out_f.write(row[3] + '\n')
-    output_file3 = os.path.join(dir, f'geometry_depth{search_depth}_llm.txt')
+    output_file3 = os.path.join(dir, f'geometry_depth{search_depth}_tdd_llm.txt')
     with open(output_file3, 'w', newline='', encoding='utf-8') as out_f:
         writer = None
         idx = 0
