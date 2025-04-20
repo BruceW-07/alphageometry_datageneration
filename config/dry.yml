@@ -1,8 +1,0 @@
-
-_base: [cluster]
-
-outpattern: '{path.parent}/dryrun-{path.stem}.jsonl'
-
-dry-run: yes
-
-n: 10

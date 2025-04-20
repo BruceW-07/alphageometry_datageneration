@@ -1,6 +1,0 @@
-_base: [secrets]
-
-skip-confirm: yes
-
-pbar: no
-

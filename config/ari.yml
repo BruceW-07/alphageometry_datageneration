@@ -1,7 +1,0 @@
-
-# outpattern: '{path.parent}/rephrased-{path.stem}.jsonl'
-
-# path: /is/cluster/scratch/fleeb/alphageo/arithmetic/depth1_funcs65/0.csv
-path: /fast/fleeb/alphageo/arithmetic/depth1_funcs65/0.csv
-
-template-path: Arithmetic/rephrase_template.txt

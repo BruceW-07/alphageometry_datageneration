@@ -1,9 +1,0 @@
-
-
-# outpattern: '{path.parent}/rephrased-{path.stem}.jsonl'
-
-# path: /is/cluster/scratch/fleeb/alphageo/geomtry/
-path: /fast/fleeb/alphageo/geometry-long/
-
-
-template-path: verb/rephrase_geo_template.txt
