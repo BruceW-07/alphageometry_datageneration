@@ -48,7 +48,7 @@ if [ $install -eq 1 ]; then
 
 fi
 
-source ./venv3/bin/activate
+# source ./venv3/bin/activate
 export PYTHONPATH=$PYTHONPATH:$MELIAD_PATH
 
 DDAR_ARGS=(
