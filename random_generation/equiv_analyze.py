@@ -1,5 +1,7 @@
 import sys
-from itertools import combinations
+import re
+from math import factorial
+from itertools import permutations, combinations
 
 
 class GeometryEquivalenceAnalyzer:
@@ -27,7 +29,6 @@ class GeometryEquivalenceAnalyzer:
         ]
         self.construct_to_id = {name: idx + 1 for idx, name in enumerate(self.definitions)}
 
-        import re
         escaped_defs = [re.escape(d) for d in self.definitions]
         pattern = r'\b(' + '|'.join(escaped_defs) + r')\b'
         self.construct_pattern = re.compile(pattern)
@@ -37,13 +38,6 @@ class GeometryEquivalenceAnalyzer:
     def are_same_figure(self, figure1, figure2):
         """
         Determine whether two strings represent the same figure.
-
-        Args:
-            figure1 (str): String representation of the first figure
-            figure2 (str): String representation of the second figure
-
-        Returns:
-            bool: True if the figures are equivalent, False otherwise
         """
         # Step 1: Parse the figure descriptions
         components1 = self.parse_figure(figure1)
@@ -95,15 +89,21 @@ class GeometryEquivalenceAnalyzer:
             if '=' in component:
                 left, right = component.split('=', 1)
                 points = left.strip().split()
-                construct_type = right.strip().split()[0]
-                construct_args = right.strip().split()[1:]
 
-                parsed_components.append({
-                    'type': 'definition',
-                    'points': points,
-                    'construct': construct_type,
-                    'args': construct_args
-                })
+                # Split the right side by comma to handle multiple constraints
+                constraints = [c.strip() for c in right.split(',')]
+
+                for constraint in constraints:
+                    construct_parts = constraint.split()
+                    construct_type = construct_parts[0]
+                    construct_args = construct_parts[1:]
+
+                    parsed_components.append({
+                        'type': 'definition',
+                        'points': points,
+                        'construct': construct_type,
+                        'args': construct_args
+                    })
             elif component.startswith('?'):
                 # This is a query component
                 query_type = component[1:].strip().split()[0]
@@ -114,17 +114,6 @@ class GeometryEquivalenceAnalyzer:
                     'query': query_type,
                     'args': query_args
                 })
-            else:
-                # Handle components without '=' (direct statements)
-                parts = component.strip().split()
-                construct_type = parts[0]
-                construct_args = parts[1:]
-
-                parsed_components.append({
-                    'type': 'statement',
-                    'construct': construct_type,
-                    'args': construct_args
-                })
 
         return parsed_components
 
@@ -134,10 +123,6 @@ class GeometryEquivalenceAnalyzer:
         for component in components:
             if component['type'] == 'definition':
                 points.update(component['points'])
-                points.update(component['args'])
-            elif component['type'] == 'statement':
-                points.update(component['args'])
-            elif component['type'] == 'query':
                 points.update(component['args'])
 
         return points
@@ -154,274 +139,274 @@ class GeometryEquivalenceAnalyzer:
                 unique_constructs.append(construct)
 
         # Sort by the number of points they define (fewer is better for starting)
-        unique_constructs.sort(key=lambda c: self.count_new_points_in_construct(c))
+        unique_constructs.sort(key=lambda c: self.EQUIVALENT_COUNTS.get(c, 1))
 
         return unique_constructs
 
-    def count_new_points_in_construct(self, construct_type):
-        """Count how many new points a construct typically defines."""
-        # This is a simplification - in reality, we'd need to analyze each construct
-        # Based on the provided info, constructs like pentagon define more points than eqangle3
-        construct_complexity = {
-            "pentagon": 5,
-            "eqangle3": 1,
-            "triangle": 3,
-            "square": 4,
-            "tangent": 2,
-            "eqangle": 8,  # Using the highest number as default
-        }
+    CONSTRUCT_EQUIVALENCES = [
+        # 基本构造类型
+        ('angle_bisector', 'x a b c', lambda args: [
+            args,  # 原始顺序: x a b c
+            [args[0], args[2], args[1], args[3]]  # a<->c交换: x c b a
+        ]),
 
-        return construct_complexity.get(construct_type, 8)  # Default to high complexity
+        ('circle', 'x a b c', lambda args: [
+            [args[0]] + list(p) for p in permutations(args[1:4])  # a,b,c的所有排列(3! = 6种)
+        ]),
+
+        ('circumcenter', 'x a b c', lambda args: [
+            [args[0]] + list(p) for p in permutations(args[1:4])  # 同circle
+        ]),
+
+        ('eq_triangle', 'x b c', lambda args: [
+            args,  # x b c
+            [args[0], args[2], args[1]]  # x c b
+        ]),
+
+        ('eqangle2', 'x a b c', lambda args: [
+            args,  # x a b c
+            [args[0], args[2], args[1], args[3]]  # x c b a
+        ]),
+
+        ('incenter', 'x a b c', lambda args: [
+            [args[0]] + list(p) for p in permutations(args[1:4])  # a,b,c的所有排列
+        ]),
+
+        # 特殊构造类型（轮换等价）
+        ('incenter2', 'x y z i a b c', lambda args: [
+            args,  # x y z i a b c
+            [args[1], args[2], args[0], args[3], args[5], args[6], args[4]],  # y z x i b c a
+            [args[2], args[0], args[1], args[3], args[6], args[4], args[5]]  # z x y i c a b
+        ]),
+
+        ('excenter', 'x a b c', lambda args: [
+            [args[0]] + list(p) for p in permutations(args[1:4])  # 同incenter
+        ]),
+
+        ('excenter2', 'x y z i a b c', lambda args: [
+            args,  # x y z i a b c
+            [args[1], args[2], args[0], args[3], args[5], args[6], args[4]],  # y z x i b c a
+            [args[2], args[0], args[1], args[3], args[6], args[4], args[5]]  # z x y i c a b
+        ]),
+
+        ('centroid', 'x y z i a b c', lambda args: [
+            args,  # x y z i a b c
+            [args[1], args[2], args[0], args[3], args[5], args[6], args[4]],  # y z x i b c a
+            [args[2], args[0], args[1], args[3], args[6], args[4], args[5]]  # z x y i c a b
+        ]),
+
+        ('ninepoints', 'x y z i a b c', lambda args: [
+            args,  # x y z i a b c
+            [args[1], args[2], args[0], args[3], args[5], args[6], args[4]],  # y z x i b c a
+            [args[2], args[0], args[1], args[3], args[6], args[4], args[5]]  # z x y i c a b
+        ]),
+
+        # 三角形相关
+        ('iso_triangle', 'a b c', lambda args: [
+            args,  # a b c
+            [args[0], args[2], args[1]]  # a c b
+        ]),
+
+        ('ieq_triangle', 'a b c', lambda args: [
+            list(p) for p in permutations(args)  # 所有排列(3! = 6种)
+        ]),
+
+        ('triangle', 'a b c', lambda args: [
+            list(p) for p in permutations(args)  # 所有排列
+        ]),
+
+        ('r_triangle', 'a b c', lambda args: [
+            args,  # a b c
+            [args[0], args[2], args[1]]  # a c b
+        ]),
+
+        # 中点相关
+        ('midpoint', 'x a b', lambda args: [
+            args,  # x a b
+            [args[0], args[2], args[1]]  # x b a
+        ]),
+
+        ('midp', 'a b c', lambda args: [
+            args,  # a b c
+            [args[0], args[2], args[1]]  # a c b
+        ]),
+
+        # 距离和线段相关
+        ('eqdistance', 'x a b c', lambda args: [
+            args,  # x a b c
+            [args[0], args[1], args[3], args[2]]  # x a c b
+        ]),
+
+        ('segment', 'a b', lambda args: [
+            args,  # a b
+            [args[1], args[0]]  # b a
+        ]),
+
+        # 共线相关
+        ('coll', '*points', lambda args: [
+            list(p) for p in permutations(args)  # 所有点的排列(n!种)
+        ]),
+
+        # 四边形相关
+        ('parallelogram', 'a b c x', lambda args: [
+            args,  # a b c x
+            [args[2], args[1], args[0], args[3]]  # c b a x
+        ]),
+
+        ('square', 'a b x y', lambda args: [
+            args,  # a b x y
+            [args[1], args[0], args[3], args[2]]  # b a y x
+        ]),
+
+        ('rectangle', 'a b c d', lambda args: [
+            [args[i], args[(i + 1) % 4], args[(i + 2) % 4], args[(i + 3) % 4]] for i in range(4)  # 循环排列
+        ]),
+
+        # 其他构造类型
+        ('cyclic', 'a b c d', lambda args: [
+            list(p) for p in permutations(args)  # 所有排列(4! = 24种)
+        ]),
+
+        ('perp', 'a b c d', lambda args: [
+            args,  # a b c d
+            [args[1], args[0], args[2], args[3]],  # b a c d
+            [args[0], args[1], args[3], args[2]],  # a b d c
+            [args[1], args[0], args[3], args[2]]  # b a d c
+        ]),
+
+    ]
+
+    EQUIVALENT_COUNTS = {}
+    for item in CONSTRUCT_EQUIVALENCES:
+        sample_args = item[1].split() if item[1] != '*points' else ['a','b','c']
+        EQUIVALENT_COUNTS[item[0]] = len(item[2](sample_args))
 
     def update_mapping_for_construct(self, comp1, comp2, current_mapping):
         """
         Update the point mapping based on a pair of components with the same construct type.
-        Takes into account the equivalence rules for different construct types.
+        Takes into account the equivalence rules for different construct types using CONSTRUCT_EQUIVALENCES.
         """
         construct_type = comp1.get('construct')
 
-        # Make a copy of the current mapping
+        # Find the equivalence rule for this construct type
+        equiv_rule = None
+        param_format = None
+        for rule_type, params, rule_func in self.CONSTRUCT_EQUIVALENCES:
+            if rule_type == construct_type:
+                equiv_rule = rule_func
+                param_format = params
+                break
+
+        # If no equivalence rule is found, use direct mapping
+        if equiv_rule is None:
+            return self._direct_mapping(comp1, comp2, current_mapping)
+
+        # Special handling for variable number of points
+        if param_format == '*points':
+            points1 = comp1.get('points', []) + comp1.get('args', [])
+            points2 = comp2.get('points', []) + comp2.get('args', [])
+
+            if len(points1) != len(points2):
+                return None
+
+            # Try each possible permutation from the equivalence rules
+            for perm in equiv_rule(points1):
+                # Try to create a mapping using this permutation
+                new_mapping = current_mapping.copy()
+                valid = True
+
+                for i, p1 in enumerate(points1):
+                    if i < len(perm):
+                        p2_idx = points1.index(perm[i])
+                        p2 = points2[p2_idx] if p2_idx < len(points2) else None
+
+                        if p2 is None or (p1 in new_mapping and new_mapping[p1] != p2):
+                            valid = False
+                            break
+                        new_mapping[p1] = p2
+
+                if valid:
+                    return new_mapping
+
+            return None
+
+        # Normal case: extract points based on parameter format
+        param_list = param_format.split()
+
+        # Gather the points from comp1 and comp2
+        points1 = []
+        points2 = []
+
+        # First try to use 'args' if available
+        if 'args' in comp1 and 'args' in comp2:
+            points1 = comp1.get('args', [])
+            points2 = comp2.get('args', [])
+        # Otherwise use 'points'
+        elif 'points' in comp1 and 'points' in comp2:
+            points1 = comp1.get('points', [])
+            points2 = comp2.get('points', [])
+        # Or combine both
+        else:
+            points1 = comp1.get('points', []) + comp1.get('args', [])
+            points2 = comp2.get('points', []) + comp2.get('args', [])
+
+        # Check that we have the right number of points
+        if len(points1) != len(param_list) or len(points2) != len(param_list):
+            return None
+
+        # Generate all possible equivalent orderings
+        equivalent_orderings = equiv_rule(points1)
+
+        # Try each ordering to find a valid mapping
+        for ordering in equivalent_orderings:
+            new_mapping = current_mapping.copy()
+            valid = True
+
+            for i, p1 in enumerate(ordering):
+                if i < len(points2):
+                    p2 = points2[i]
+                    if p1 in new_mapping and new_mapping[p1] != p2:
+                        valid = False
+                        break
+                    new_mapping[p1] = p2
+
+            if valid:
+                return new_mapping
+
+        return None
+
+    def _direct_mapping(self, comp1, comp2, current_mapping):
+        """
+        Helper method for direct mapping when no specific equivalence rule exists.
+        """
         new_mapping = current_mapping.copy()
 
-        # Apply equivalence rules based on the construct type
-        if construct_type == 'pentagon':
-            # All five points should match in order
-            if len(comp1.get('points', [])) != len(comp2.get('points', [])):
+        # Map points based on their positions
+        if 'points' in comp1 and 'points' in comp2:
+            if len(comp1['points']) != len(comp2['points']):
                 return None
 
-            for i, p1 in enumerate(comp1.get('points', [])):
-                p2 = comp2.get('points', [])[i]
+            for i, p1 in enumerate(comp1['points']):
+                p2 = comp2['points'][i]
                 if p1 in new_mapping and new_mapping[p1] != p2:
                     return None
                 new_mapping[p1] = p2
 
-            for i, p1 in enumerate(comp1.get('args', [])):
-                if i < len(comp2.get('args', [])):
-                    p2 = comp2.get('args', [])[i]
-                    if p1 in new_mapping and new_mapping[p1] != p2:
-                        return None
-                    new_mapping[p1] = p2
-
-        elif construct_type == 'eqangle3':
-            # Handle eqangle3 equivalence
-            if len(comp1.get('points', [])) != 1 or len(comp2.get('points', [])) != 1:
+        if 'args' in comp1 and 'args' in comp2:
+            if len(comp1['args']) != len(comp2['args']):
                 return None
 
-            p1 = comp1.get('points', [])[0]
-            p2 = comp2.get('points', [])[0]
-
-            if p1 in new_mapping and new_mapping[p1] != p2:
-                return None
-
-            new_mapping[p1] = p2
-
-            # eqangle3 args are described as equivalent, but we need the exact definition to map them
-            # For now, assume simple positional matching
-            args1 = comp1.get('args', [])
-            args2 = comp2.get('args', [])
-
-            if len(args1) != len(args2):
-                return None
-
-            for i, arg1 in enumerate(args1):
-                arg2 = args2[i]
-                if arg1 in new_mapping and new_mapping[arg1] != arg2:
-                    return None
-                new_mapping[arg1] = arg2
-
-        elif construct_type == 'triangle':
-            # All three points are equivalent, but let's match them positionally
-            if len(comp1.get('points', [])) != len(comp2.get('points', [])):
-                return None
-
-            for i, p1 in enumerate(comp1.get('points', [])):
-                p2 = comp2.get('points', [])[i]
+            for i, p1 in enumerate(comp1['args']):
+                p2 = comp2['args'][i]
                 if p1 in new_mapping and new_mapping[p1] != p2:
                     return None
                 new_mapping[p1] = p2
-
-        elif construct_type == 'on_tline':
-            # on_tline x a b c: b and c are equivalent
-            if len(comp1.get('args', [])) != len(comp2.get('args', [])):
-                return None
-
-            # Map the first point directly
-            p1_first = comp1.get('args', [])[0]
-            p2_first = comp2.get('args', [])[0]
-
-            if p1_first in new_mapping and new_mapping[p1_first] != p2_first:
-                return None
-
-            new_mapping[p1_first] = p2_first
-
-            # Check the equivalent points (b and c)
-            p1_b = comp1.get('args', [])[1]
-            p1_c = comp1.get('args', [])[2]
-            p2_b = comp2.get('args', [])[1]
-            p2_c = comp2.get('args', [])[2]
-
-            # Try to map b->b, c->c
-            mapping1 = new_mapping.copy()
-            if (p1_b not in mapping1 or mapping1[p1_b] == p2_b) and (p1_c not in mapping1 or mapping1[p1_c] == p2_c):
-                mapping1[p1_b] = p2_b
-                mapping1[p1_c] = p2_c
-                return mapping1
-
-            # Try to map b->c, c->b (since they're equivalent)
-            mapping2 = new_mapping.copy()
-            if (p1_b not in mapping2 or mapping2[p1_b] == p2_c) and (p1_c not in mapping2 or mapping2[p1_c] == p2_b):
-                mapping2[p1_b] = p2_c
-                mapping2[p1_c] = p2_b
-                return mapping2
-
-            return None
-
-        elif construct_type == 'square':
-            # Handle square equivalence
-            # square a b x y has the special equivalence: square b a y x
-            if len(comp1.get('points', [])) != len(comp2.get('points', [])):
-                return None
-
-            # Try normal mapping
-            normal_mapping = new_mapping.copy()
-            for i, p1 in enumerate(comp1.get('points', [])):
-                p2 = comp2.get('points', [])[i]
-                if p1 in normal_mapping and normal_mapping[p1] != p2:
-                    normal_mapping = None
-                    break
-                normal_mapping[p1] = p2
-
-            # Try special equivalence mapping
-            special_mapping = new_mapping.copy()
-            p1_points = comp1.get('points', [])
-            p2_points = comp2.get('points', [])
-
-            if len(p1_points) == 2 and len(p2_points) == 2:
-                # square a b x y --> square b a y x
-                alt_p2_points = [p2_points[1], p2_points[0]]  # b, a
-
-                for i, p1 in enumerate(p1_points):
-                    p2 = alt_p2_points[i]
-                    if p1 in special_mapping and special_mapping[p1] != p2:
-                        special_mapping = None
-                        break
-                    special_mapping[p1] = p2
-            else:
-                special_mapping = None
-
-            return normal_mapping or special_mapping
-
-        elif construct_type == 'tangent':
-            # tangent x y a o b: x y are equivalent
-            if len(comp1.get('points', [])) != len(comp2.get('points', [])):
-                return None
-
-            # Map the first two points (they are equivalent)
-            p1_x = comp1.get('points', [])[0]
-            p1_y = comp1.get('points', [])[1]
-            p2_x = comp2.get('points', [])[0]
-            p2_y = comp2.get('points', [])[1]
-
-            # Try direct mapping
-            mapping1 = new_mapping.copy()
-            if (p1_x not in mapping1 or mapping1[p1_x] == p2_x) and (p1_y not in mapping1 or mapping1[p1_y] == p2_y):
-                mapping1[p1_x] = p2_x
-                mapping1[p1_y] = p2_y
-
-                # Map the remaining points directly
-                for i in range(2, len(comp1.get('points', []))):
-                    if i < len(comp2.get('points', [])):
-                        p1 = comp1.get('points', [])[i]
-                        p2 = comp2.get('points', [])[i]
-                        if p1 in mapping1 and mapping1[p1] != p2:
-                            mapping1 = None
-                            break
-                        mapping1[p1] = p2
-
-                if mapping1:
-                    return mapping1
-
-            # Try swapped mapping (since x y are equivalent)
-            mapping2 = new_mapping.copy()
-            if (p1_x not in mapping2 or mapping2[p1_x] == p2_y) and (p1_y not in mapping2 or mapping2[p1_y] == p2_x):
-                mapping2[p1_x] = p2_y
-                mapping2[p1_y] = p2_x
-
-                # Map the remaining points directly
-                for i in range(2, len(comp1.get('points', []))):
-                    if i < len(comp2.get('points', [])):
-                        p1 = comp1.get('points', [])[i]
-                        p2 = comp2.get('points', [])[i]
-                        if p1 in mapping2 and mapping2[p1] != p2:
-                            mapping2 = None
-                            break
-                        mapping2[p1] = p2
-
-                if mapping2:
-                    return mapping2
-
-            return None
-
-        elif construct_type == 'eqangle':
-            # eqangle a b c d e f g h: Check if the angles match
-            args1 = comp1.get('args', [])
-            args2 = comp2.get('args', [])
-
-            if len(args1) != 8 or len(args2) != 8:
-                return None
-
-            # Extract the angles
-            angle1_1 = args1[0:4]  # a b c d
-            angle1_2 = args1[4:8]  # e f g h
-            angle2_1 = args2[0:4]  # Corresponding angles in figure 2
-            angle2_2 = args2[4:8]
-
-            # Try to map the points consistently
-            for i, p1 in enumerate(angle1_1):
-                p2 = angle2_1[i]
-                if p1 in new_mapping and new_mapping[p1] != p2:
-                    return None
-                new_mapping[p1] = p2
-
-            for i, p1 in enumerate(angle1_2):
-                p2 = angle2_2[i]
-                if p1 in new_mapping and new_mapping[p1] != p2:
-                    return None
-                new_mapping[p1] = p2
-
-            # This is a simplified approach - for a complete solution,
-            # we'd need to consider all possible equivalences for angles
-
-        else:
-            # Default case: Try to map points based on their positions
-            if 'points' in comp1 and 'points' in comp2:
-                if len(comp1['points']) != len(comp2['points']):
-                    return None
-
-                for i, p1 in enumerate(comp1['points']):
-                    p2 = comp2['points'][i]
-                    if p1 in new_mapping and new_mapping[p1] != p2:
-                        return None
-                    new_mapping[p1] = p2
-
-            if 'args' in comp1 and 'args' in comp2:
-                if len(comp1['args']) != len(comp2['args']):
-                    return None
-
-                for i, p1 in enumerate(comp1['args']):
-                    p2 = comp2['args'][i]
-                    if p1 in new_mapping and new_mapping[p1] != p2:
-                        return None
-                    new_mapping[p1] = p2
 
         return new_mapping
 
     def find_point_mapping(self, components1, components2):
         """
         Find a valid mapping between points in figure1 and figure2.
-
-        This is the core of the algorithm - we need to find which points in figure1
-        correspond to which points in figure2.
         """
         # Extract all unique points from both figures
         points1 = self.extract_points(components1)
@@ -509,15 +494,6 @@ class GeometryEquivalenceAnalyzer:
     def angles_match(self, angle1, angle2):
         """
         Check if two angles match. Angles are represented as [a, b, c, d] for angle between lines ab and cd.
-        Angles can match in multiple ways:
-        - Directly: angle1 = angle2
-        - Reversed first line: [a, b, c, d] = [b, a, c, d]
-        - Reversed second line: [a, b, c, d] = [a, b, d, c]
-        - Both lines reversed: [a, b, c, d] = [b, a, d, c]
-        - Swapped lines: [a, b, c, d] = [c, d, a, b]
-        - Swapped and first line reversed: [a, b, c, d] = [d, c, a, b]
-        - Swapped and second line reversed: [a, b, c, d] = [c, d, b, a]
-        - Swapped and both lines reversed: [a, b, c, d] = [d, c, b, a]
         """
         if len(angle1) != 4 or len(angle2) != 4:
             return False
@@ -657,16 +633,6 @@ class GeometryEquivalenceAnalyzer:
                 }
                 transformed_components.append(transformed_comp)
 
-            elif comp1['type'] == 'statement':
-                transformed_args = [mapping.get(p, p) for p in comp1['args']]
-
-                transformed_comp = {
-                    'type': 'statement',
-                    'construct': comp1['construct'],
-                    'args': transformed_args
-                }
-                transformed_components.append(transformed_comp)
-
             elif comp1['type'] == 'query':
                 transformed_args = [mapping.get(p, p) for p in comp1['args']]
 
@@ -692,12 +658,6 @@ class GeometryEquivalenceAnalyzer:
                         found_match = True
                         break
 
-                elif trans_comp['type'] == 'statement':
-                    if (trans_comp['construct'] == comp2['construct'] and
-                            self.is_args_equivalent(trans_comp['construct'], trans_comp['args'], comp2['args'])):
-                        found_match = True
-                        break
-
                 elif trans_comp['type'] == 'query':
                     if (trans_comp['query'] == comp2['query'] and
                             self.is_args_equivalent(trans_comp['query'], trans_comp['args'], comp2['args'])):
@@ -709,21 +669,6 @@ class GeometryEquivalenceAnalyzer:
 
         return True
 
-    def map_component(self, component, point_mapping):
-        """Map the points in a component according to the given point mapping."""
-        mapped_component = component.copy()
-
-        if component['type'] == 'definition':
-            mapped_component['points'] = [point_mapping.get(p, p) for p in component['points']]
-            mapped_component['args'] = [point_mapping.get(p, p) for p in component['args']]
-
-        elif component['type'] == 'statement':
-            mapped_component['args'] = [point_mapping.get(p, p) for p in component['args']]
-
-        elif component['type'] == 'query':
-            mapped_component['args'] = [point_mapping.get(p, p) for p in component['args']]
-
-        return mapped_component
 
     def check_components_match(self, components1, components2, point_mapping):
         """
@@ -747,12 +692,6 @@ class GeometryEquivalenceAnalyzer:
                 if mapped_comp['type'] == 'definition':
                     if (mapped_comp['construct'] == comp2['construct'] and
                             sorted(mapped_comp['points']) == sorted(comp2['points']) and
-                            self.is_args_equivalent(mapped_comp['construct'], mapped_comp['args'], comp2['args'])):
-                        found_match = True
-                        break
-
-                elif mapped_comp['type'] == 'statement':
-                    if (mapped_comp['construct'] == comp2['construct'] and
                             self.is_args_equivalent(mapped_comp['construct'], mapped_comp['args'], comp2['args'])):
                         found_match = True
                         break
@@ -781,11 +720,6 @@ class GeometryEquivalenceAnalyzer:
                         found_match = True
                         break
 
-                elif mapped_comp['type'] == 'statement':
-                    if (mapped_comp['construct'] == comp2['construct'] and
-                            self.is_args_equivalent(mapped_comp['construct'], mapped_comp['args'], comp2['args'])):
-                        found_match = True
-                        break
 
                 elif mapped_comp['type'] == 'query':
                     if (mapped_comp['query'] == comp2['query'] and
@@ -806,9 +740,6 @@ class GeometryEquivalenceAnalyzer:
             mapped_component['points'] = [point_mapping.get(p, p) for p in component['points']]
             mapped_component['args'] = [point_mapping.get(p, p) for p in component['args']]
 
-        elif component['type'] == 'statement':
-            mapped_component['args'] = [point_mapping.get(p, p) for p in component['args']]
-
         elif component['type'] == 'query':
             mapped_component['args'] = [point_mapping.get(p, p) for p in component['args']]
 
@@ -822,7 +753,6 @@ class GeometryEquivalenceAnalyzer:
 
         before_q, after_q = content.split('?', 1)
         # Extract constructs using regex
-        import re
         constructs = re.findall(self.construct_pattern, before_q)
         construct_ids = sorted(self.construct_to_id[c] for c in constructs if c in self.construct_to_id)
 
