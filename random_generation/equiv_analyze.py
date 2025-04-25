@@ -743,20 +743,30 @@ class GeometryEquivalenceAnalyzer:
             print(f"Error reading input file: {e}")
             return False
 
-    def find_equivalent_figures(self):
+        def find_equivalent_figures(self):
         """Find all pairs of equivalent figures."""
         from itertools import combinations
 
         equivalent_pairs = []
+        matched_numbers = set()
 
         # For each structure group, check pairs within the group
         for structure_key, data_nums in self.structure_map.items():
             if len(data_nums) > 1:
-                for a, b in combinations(data_nums, 2):
-                    fig1 = self.geometry_map[a]
-                    fig2 = self.geometry_map[b]
-                    if self.are_same_figure(fig1, fig2):
-                        equivalent_pairs.append((a, b))
+                sorted_nums = sorted(data_nums)
+                for i in range(len(sorted_nums)):
+                    a = sorted_nums[i]
+                    if a in matched_numbers:
+                        continue
+                    for j in range(i + 1, len(sorted_nums)):
+                        b = sorted_nums[j]
+                        if b in matched_numbers:
+                            continue
+                        fig1 = self.geometry_map[a]
+                        fig2 = self.geometry_map[b]
+                        if self.are_same_figure(fig1, fig2):
+                            equivalent_pairs.append((a, b))
+                            matched_numbers.add(b)
 
         return equivalent_pairs
 
