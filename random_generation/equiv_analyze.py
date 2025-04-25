@@ -29,11 +29,188 @@ class GeometryEquivalenceAnalyzer:
         ]
         self.construct_to_id = {name: idx + 1 for idx, name in enumerate(self.definitions)}
 
+        self.CONSTRUCT_EQUIVALENCES = [
+            # 基本构造类型
+            ('angle_bisector', 'x a b c', lambda args: [
+                args,  # 原始顺序: x a b c
+                [args[0], args[2], args[1], args[3]]  # a<->c交换: x c b a
+            ]),
+
+            ('circle', 'x a b c', lambda args: [
+                [args[0]] + list(p) for p in permutations(args[1:4])  # a,b,c的所有排列(3! = 6种)
+            ]),
+
+            ('circumcenter', 'x a b c', lambda args: [
+                [args[0]] + list(p) for p in permutations(args[1:4])  # 同circle
+            ]),
+
+            ('eq_triangle', 'x b c', lambda args: [
+                args,  # x b c
+                [args[0], args[2], args[1]]  # x c b
+            ]),
+
+            ('eqangle2', 'x a b c', lambda args: [
+                args,  # x a b c
+                [args[0], args[2], args[1], args[3]]  # x c b a
+            ]),
+
+            ('incenter', 'x a b c', lambda args: [
+                [args[0]] + list(p) for p in permutations(args[1:4])  # a,b,c的所有排列
+            ]),
+
+            # 特殊构造类型（轮换等价）
+            ('incenter2', 'x y z i a b c', lambda args: [
+                args,  # x y z i a b c
+                [args[1], args[2], args[0], args[3], args[5], args[6], args[4]],  # y z x i b c a
+                [args[2], args[0], args[1], args[3], args[6], args[4], args[5]]  # z x y i c a b
+            ]),
+
+            ('excenter', 'x a b c', lambda args: [
+                [args[0]] + list(p) for p in permutations(args[1:4])  # 同incenter
+            ]),
+
+            ('excenter2', 'x y z i a b c', lambda args: [
+                args,  # x y z i a b c
+                [args[1], args[2], args[0], args[3], args[5], args[6], args[4]],  # y z x i b c a
+                [args[2], args[0], args[1], args[3], args[6], args[4], args[5]]  # z x y i c a b
+            ]),
+
+            ('centroid', 'x y z i a b c', lambda args: [
+                args,  # x y z i a b c
+                [args[1], args[2], args[0], args[3], args[5], args[6], args[4]],  # y z x i b c a
+                [args[2], args[0], args[1], args[3], args[6], args[4], args[5]]  # z x y i c a b
+            ]),
+
+            ('ninepoints', 'x y z i a b c', lambda args: [
+                args,  # x y z i a b c
+                [args[1], args[2], args[0], args[3], args[5], args[6], args[4]],  # y z x i b c a
+                [args[2], args[0], args[1], args[3], args[6], args[4], args[5]]  # z x y i c a b
+            ]),
+
+            # 三角形相关
+            ('iso_triangle', 'a b c', lambda args: [
+                args,  # a b c
+                [args[0], args[2], args[1]]  # a c b
+            ]),
+
+            ('ieq_triangle', 'a b c', lambda args: [
+                list(p) for p in permutations(args)  # 所有排列(3! = 6种)
+            ]),
+
+            ('triangle', 'a b c', lambda args: [
+                list(p) for p in permutations(args)  # 所有排列
+            ]),
+
+            ('r_triangle', 'a b c', lambda args: [
+                args,  # a b c
+                [args[0], args[2], args[1]]  # a c b
+            ]),
+
+            # 中点相关
+            ('midpoint', 'x a b', lambda args: [
+                args,  # x a b
+                [args[0], args[2], args[1]]  # x b a
+            ]),
+
+            ('midp', 'a b c', lambda args: [
+                args,  # a b c
+                [args[0], args[2], args[1]]  # a c b
+            ]),
+
+            # 距离和线段相关
+            ('eqdistance', 'x a b c', lambda args: [
+                args,  # x a b c
+                [args[0], args[1], args[3], args[2]]  # x a c b
+            ]),
+
+            ('segment', 'a b', lambda args: [
+                args,  # a b
+                [args[1], args[0]]  # b a
+            ]),
+
+            # 共线相关
+            ('coll', '*points', lambda args: [
+                list(p) for p in permutations(args)  # 所有点的排列(n!种)
+            ]),
+
+            # 四边形相关
+            ('parallelogram', 'a b c x', lambda args: [
+                args,  # a b c x
+                [args[2], args[1], args[0], args[3]]  # c b a x
+            ]),
+
+            ('square', 'a b x y', lambda args: [
+                args,  # a b x y
+                [args[1], args[0], args[3], args[2]]  # b a y x
+            ]),
+
+            ('rectangle', 'a b c d', lambda args: [
+                [args[i], args[(i + 1) % 4], args[(i + 2) % 4], args[(i + 3) % 4]] for i in range(4)  # 循环排列
+            ]),
+
+            # 其他构造类型
+            ('cyclic', 'a b c d', lambda args: [
+                list(p) for p in permutations(args)  # 所有排列(4! = 24种)
+            ]),
+
+            ('perp', 'a b c d', lambda args: [
+                args,  # a b c d
+                [args[1], args[0], args[2], args[3]],  # b a c d
+                [args[0], args[1], args[3], args[2]],  # a b d c
+                [args[1], args[0], args[3], args[2]]  # b a d c
+            ]),
+
+            ('eqangle', 'a b c d e f g h', lambda args: [
+                angle1 + angle2
+                for angle1 in self.generate_angle_equivalences(args[0:4])
+                for angle2 in self.generate_angle_equivalences(args[4:8])
+            ] + [
+                angle2 + angle1
+                for angle1 in self.generate_angle_equivalences(args[0:4])
+                for angle2 in self.generate_angle_equivalences(args[4:8])
+            ]),
+
+            # Add on_tline with b, c equivalence
+            ('on_tline', 'x a b c', lambda args: [
+                args,  # x a b c
+                [args[0], args[1], args[3], args[2]]  # x a c b
+            ]),
+
+            ('tangent', 'x y a o b', lambda args: [
+                args,  # x y a o b
+                [args[1], args[0]] + args[2:]  # y x a o b
+            ]),
+
+        ]
+
+        self.EQUIVALENT_COUNTS = {}
+        for item in self.CONSTRUCT_EQUIVALENCES:
+            sample_args = item[1].split() if item[1] != '*points' else ['a', 'b', 'c']
+            self.EQUIVALENT_COUNTS[item[0]] = len(item[2](sample_args))
+
+
         escaped_defs = [re.escape(d) for d in self.definitions]
         pattern = r'\b(' + '|'.join(escaped_defs) + r')\b'
         self.construct_pattern = re.compile(pattern)
         self.target_pattern = re.compile(pattern)
         self.geometry_map = {}
+
+    def generate_angle_equivalences(self, angle):
+        """Generate all equivalent representations of an angle [a,b,c,d]"""
+        if len(angle) != 4:
+            return [angle]
+
+        a, b, c, d = angle
+        return [
+            [a, b, c, d],  # Original
+            [b, a, c, d],  # Reversed first line
+            [a, b, d, c],  # Reversed second line
+            [b, a, d, c],  # Both lines reversed
+            [c, d, a, b],  # Swapped lines
+            [d, c, a, b],  # Swapped and first line reversed
+            [c, d, b, a],  # Swapped and second line reversed
+            [d, c, b, a],  # Swapped and both lines reversed
+        ]
 
     def are_same_figure(self, figure1, figure2):
         """
@@ -140,146 +317,8 @@ class GeometryEquivalenceAnalyzer:
 
         # Sort by the number of points they define (fewer is better for starting)
         unique_constructs.sort(key=lambda c: self.EQUIVALENT_COUNTS.get(c, 1))
-
         return unique_constructs
 
-    CONSTRUCT_EQUIVALENCES = [
-        # 基本构造类型
-        ('angle_bisector', 'x a b c', lambda args: [
-            args,  # 原始顺序: x a b c
-            [args[0], args[2], args[1], args[3]]  # a<->c交换: x c b a
-        ]),
-
-        ('circle', 'x a b c', lambda args: [
-            [args[0]] + list(p) for p in permutations(args[1:4])  # a,b,c的所有排列(3! = 6种)
-        ]),
-
-        ('circumcenter', 'x a b c', lambda args: [
-            [args[0]] + list(p) for p in permutations(args[1:4])  # 同circle
-        ]),
-
-        ('eq_triangle', 'x b c', lambda args: [
-            args,  # x b c
-            [args[0], args[2], args[1]]  # x c b
-        ]),
-
-        ('eqangle2', 'x a b c', lambda args: [
-            args,  # x a b c
-            [args[0], args[2], args[1], args[3]]  # x c b a
-        ]),
-
-        ('incenter', 'x a b c', lambda args: [
-            [args[0]] + list(p) for p in permutations(args[1:4])  # a,b,c的所有排列
-        ]),
-
-        # 特殊构造类型（轮换等价）
-        ('incenter2', 'x y z i a b c', lambda args: [
-            args,  # x y z i a b c
-            [args[1], args[2], args[0], args[3], args[5], args[6], args[4]],  # y z x i b c a
-            [args[2], args[0], args[1], args[3], args[6], args[4], args[5]]  # z x y i c a b
-        ]),
-
-        ('excenter', 'x a b c', lambda args: [
-            [args[0]] + list(p) for p in permutations(args[1:4])  # 同incenter
-        ]),
-
-        ('excenter2', 'x y z i a b c', lambda args: [
-            args,  # x y z i a b c
-            [args[1], args[2], args[0], args[3], args[5], args[6], args[4]],  # y z x i b c a
-            [args[2], args[0], args[1], args[3], args[6], args[4], args[5]]  # z x y i c a b
-        ]),
-
-        ('centroid', 'x y z i a b c', lambda args: [
-            args,  # x y z i a b c
-            [args[1], args[2], args[0], args[3], args[5], args[6], args[4]],  # y z x i b c a
-            [args[2], args[0], args[1], args[3], args[6], args[4], args[5]]  # z x y i c a b
-        ]),
-
-        ('ninepoints', 'x y z i a b c', lambda args: [
-            args,  # x y z i a b c
-            [args[1], args[2], args[0], args[3], args[5], args[6], args[4]],  # y z x i b c a
-            [args[2], args[0], args[1], args[3], args[6], args[4], args[5]]  # z x y i c a b
-        ]),
-
-        # 三角形相关
-        ('iso_triangle', 'a b c', lambda args: [
-            args,  # a b c
-            [args[0], args[2], args[1]]  # a c b
-        ]),
-
-        ('ieq_triangle', 'a b c', lambda args: [
-            list(p) for p in permutations(args)  # 所有排列(3! = 6种)
-        ]),
-
-        ('triangle', 'a b c', lambda args: [
-            list(p) for p in permutations(args)  # 所有排列
-        ]),
-
-        ('r_triangle', 'a b c', lambda args: [
-            args,  # a b c
-            [args[0], args[2], args[1]]  # a c b
-        ]),
-
-        # 中点相关
-        ('midpoint', 'x a b', lambda args: [
-            args,  # x a b
-            [args[0], args[2], args[1]]  # x b a
-        ]),
-
-        ('midp', 'a b c', lambda args: [
-            args,  # a b c
-            [args[0], args[2], args[1]]  # a c b
-        ]),
-
-        # 距离和线段相关
-        ('eqdistance', 'x a b c', lambda args: [
-            args,  # x a b c
-            [args[0], args[1], args[3], args[2]]  # x a c b
-        ]),
-
-        ('segment', 'a b', lambda args: [
-            args,  # a b
-            [args[1], args[0]]  # b a
-        ]),
-
-        # 共线相关
-        ('coll', '*points', lambda args: [
-            list(p) for p in permutations(args)  # 所有点的排列(n!种)
-        ]),
-
-        # 四边形相关
-        ('parallelogram', 'a b c x', lambda args: [
-            args,  # a b c x
-            [args[2], args[1], args[0], args[3]]  # c b a x
-        ]),
-
-        ('square', 'a b x y', lambda args: [
-            args,  # a b x y
-            [args[1], args[0], args[3], args[2]]  # b a y x
-        ]),
-
-        ('rectangle', 'a b c d', lambda args: [
-            [args[i], args[(i + 1) % 4], args[(i + 2) % 4], args[(i + 3) % 4]] for i in range(4)  # 循环排列
-        ]),
-
-        # 其他构造类型
-        ('cyclic', 'a b c d', lambda args: [
-            list(p) for p in permutations(args)  # 所有排列(4! = 24种)
-        ]),
-
-        ('perp', 'a b c d', lambda args: [
-            args,  # a b c d
-            [args[1], args[0], args[2], args[3]],  # b a c d
-            [args[0], args[1], args[3], args[2]],  # a b d c
-            [args[1], args[0], args[3], args[2]]  # b a d c
-        ]),
-
-    ]
-
-    EQUIVALENT_COUNTS = {}
-    for item in CONSTRUCT_EQUIVALENCES:
-        sample_args = item[1].split() if item[1] != '*points' else ['a','b','c']
-        EQUIVALENT_COUNTS[item[0]] = len(item[2](sample_args))
 
     def update_mapping_for_construct(self, comp1, comp2, current_mapping):
         """
@@ -491,127 +530,30 @@ class GeometryEquivalenceAnalyzer:
         # If no valid complete mapping is found
         return mapping
 
-    def angles_match(self, angle1, angle2):
-        """
-        Check if two angles match. Angles are represented as [a, b, c, d] for angle between lines ab and cd.
-        """
-        if len(angle1) != 4 or len(angle2) != 4:
-            return False
-
-        # Direct match
-        if angle1 == angle2:
-            return True
-
-        # Reversed first line
-        if [angle1[1], angle1[0], angle1[2], angle1[3]] == angle2:
-            return True
-
-        # Reversed second line
-        if [angle1[0], angle1[1], angle1[3], angle1[2]] == angle2:
-            return True
-
-        # Both lines reversed
-        if [angle1[1], angle1[0], angle1[3], angle1[2]] == angle2:
-            return True
-
-        # Swapped lines
-        if [angle1[2], angle1[3], angle1[0], angle1[1]] == angle2:
-            return True
-
-        # Swapped and first line reversed
-        if [angle1[3], angle1[2], angle1[0], angle1[1]] == angle2:
-            return True
-
-        # Swapped and second line reversed
-        if [angle1[2], angle1[3], angle1[1], angle1[0]] == angle2:
-            return True
-
-        # Swapped and both lines reversed
-        if [angle1[3], angle1[2], angle1[1], angle1[0]] == angle2:
-            return True
-
-        return False
 
     def is_args_equivalent(self, construct_type, args1, args2):
         """
-        Check if two sets of arguments are equivalent based on the construct type.
+        Check if two sets of arguments are equivalent based on the construct type and CONSTRUCT_EQUIVALENCES.
         """
         if len(args1) != len(args2):
             return False
 
-        # Handle specific construct types and their equivalence rules
-        if construct_type == 'angle_bisector':
-            # angle_bisector x a b c | a and c are equivalent
-            if args1[0] != args2[0]:
-                return False
+        # Find the equivalence rule for this construct type
+        equiv_rule = None
+        for rule_type, params, rule_func in self.CONSTRUCT_EQUIVALENCES:
+            if rule_type == construct_type:
+                equiv_rule = rule_func
+                break
 
-            if (args1[1] == args2[1] and args1[2] == args2[2] and args1[3] == args2[3]) or \
-                    (args1[1] == args2[3] and args1[2] == args2[2] and args1[3] == args2[1]):
-                return True
+        # If no equivalence rule is found, use direct comparison
+        if equiv_rule is None:
+            return args1 == args2
 
-            return False
+        # Generate all equivalent forms of args1
+        equiv_forms = equiv_rule(args1)
 
-        elif construct_type == 'circle':
-            # circle x a b c | a, b, c are equivalent (three points on the circle)
-            if args1[0] != args2[0]:
-                return False
-
-            return set(args1[1:4]) == set(args2[1:4])
-
-        elif construct_type == 'on_tline':
-            # on_tline x a b c | b c are equivalent
-            if args1[0] != args2[0]:
-                return False
-
-            if (args1[1] == args2[1] and (args1[2] == args2[2] or args1[2] == args2[3])) or \
-                    (args1[1] == args2[2] and (args1[2] == args2[1] or args1[2] == args2[3])) or \
-                    (args1[1] == args2[3] and (args1[2] == args2[1] or args1[2] == args2[2])):
-                return True
-
-            return False
-
-        elif construct_type == 'tangent':
-            # tangent x y a o b | x y are equivalent
-            if len(args1) < 2 or len(args2) < 2:
-                return False
-
-            # Check if the first two points match (can be swapped)
-            if (args1[0] == args2[0] and args1[1] == args2[1]) or \
-                    (args1[0] == args2[1] and args1[1] == args2[0]):
-                # Check remaining points
-                remaining_match = True
-                for i in range(2, len(args1)):
-                    if i < len(args2) and args1[i] != args2[i]:
-                        remaining_match = False
-                        break
-
-                if remaining_match:
-                    return True
-
-            return False
-
-        elif construct_type == 'eqangle':
-            # eqangle a b c d e f g h | Angles can be compared
-            if len(args1) != 8 or len(args2) != 8:
-                return False
-
-            # Extract the angles
-            angle1_1 = args1[0:4]  # a b c d
-            angle1_2 = args1[4:8]  # e f g h
-            angle2_1 = args2[0:4]
-            angle2_2 = args2[4:8]
-
-            # Check if the angles match (can be swapped or reversed)
-            if self.angles_match(angle1_1, angle2_1) and self.angles_match(angle1_2, angle2_2):
-                return True
-
-            if self.angles_match(angle1_1, angle2_2) and self.angles_match(angle1_2, angle2_1):
-                return True
-
-            return False
-
-        # Default case: check if the arguments are exactly the same
-        return args1 == args2
+        # Check if args2 matches any equivalent form
+        return args2 in equiv_forms
 
     def is_mapping_consistent(self, components1, components2, mapping):
         """
